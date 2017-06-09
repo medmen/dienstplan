@@ -62,3 +62,20 @@ body {
 .container {
     /** background-image: linear-gradient(to bottom right, rgba(123,123,123,0.5), rgba(0,0,0,0.2));*/
 }
+
+/** CSS-Grid **/
+.gridcontainer {
+    width: 100%;
+    min-width: 100%;
+    display: grid;
+    grid-template-columns: 32% 32% 32%;
+    grid-gap: 2%;
+    background-color: rgba(123,123,123,0.5);
+}
+
+.box {
+    background-color: rgba(123,123,123,0.5);
+    border-radius: 5px;
+    padding: 20px;
+    font-size: 105%;
+}

@@ -2,3 +2,6 @@
 Würde .gitignore löschen
 Würde .idea/ löschen
 /config/_people.php
+/css/font-awesome/
+/composer.json
+/composer.lock
