@@ -92,7 +92,7 @@ class wuensche{
         } else {
           //   print_r("$person is not in duty <br>");
         }
-        $ret.= '><script> $(function() { $("#duty_'.$person.'_'.$counter.'").dateRangePicker(); });</script>'."<br>\n";
+        $ret.= '><script id="sduty_'.$person.'_'.$counter.'"> $(function() { $("#duty_'.$person.'_'.$counter.'").dateRangePicker(); });</script>'."<br>\n";
         return $ret;
     }
 
