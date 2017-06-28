@@ -1,4 +1,11 @@
 # dienstplan
 a Duty roster respecting wishes and obeying rules
 
-dienstplan is a simple PHP based duty roster. 
+dienstplan is a simple PHP based duty roster. It works with a trial and error approach applying rules like
+* no consecutive duties
+* even distribution 
+* maximum duties on weekends
+and supports wishes (duty/no duty at a certain date)
+
+So far, dienstplan ist one-dimensional and kept as simple as possible. 
+No support for different duty types, no database (data stored in arrays).
