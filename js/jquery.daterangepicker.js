@@ -941,6 +941,12 @@
             open(0);
         }
 
+        /**
+         * Workaround for "Single month shows previous month on selection"
+         * @see https://github.com/longbill/jquery-date-range-picker/issues/343
+         */
+        $('.date-picker-wrapper').find('span.next').click();
+
         // expose some api
         $(this).data('dateRangePicker', {
             setStart: function(d1) {

@@ -34,6 +34,6 @@ $(document).on('blur change', 'input', function() {
 
 
     console.log('adding new field with id ' + new_id + ' to ' + this_field.attr('id'));
-    this_field.parent().append('<input placeholder="' + placeholder +'" class="datepicker" type="text" size="15" name="' + $(this).parent().attr('id') + '[]" id="' + new_id + '"/> <script id="s' + new_id + '"> $(function() { $("#' + new_id + '").dateRangePicker(); });</script>'); //add input box
+    this_field.parent().append('<input placeholder="' + placeholder +'" class="datepicker" type="text" size="15" name="' + $(this).parent().attr('id') + '[]" id="' + new_id + '"/> <script id="s' + new_id + '"> $(function() { $("#' + new_id + '").dateRangePicker($.datepicker_settings); });</script>'); //add input box
 });
 
