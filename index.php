@@ -1,6 +1,9 @@
 <?php
 require 'dienstplan.php';
 $dienstplan = new dienstplan();
+$monat = new DateTime($dienstplan->target_year.'-'.$dienstplan->target_month);
+setlocale(LC_TIME, 'de_DE.UTF-8');
+$monat_formatiert = strftime("%B %Y", $monat->getTimestamp());
 $dienstplan->generate();
 ?>
 <html lang="de">
@@ -8,7 +11,10 @@ $dienstplan->generate();
 <body>
 <div class="container">
     <?php include 'navigation.html';?>
-    <h1>DER DIENSTPLAN</h1>
+    <h1>Der Dienstplan für <?php echo $monat_formatiert; ?></h1>
+    <section class="row">
+        <aside><?php echo $dienstplan->message; ?></aside>
+    </section>
 
     <section class="row">
     <article id="main" class="seven columns">

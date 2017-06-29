@@ -9,20 +9,21 @@
 ini_set('display_errors', 1);
 error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
-// require_once('./config/wishes.php');
 
 class dienstplan {
     function __construct()
     {
         // load people
         require_once('./config/people.php');
-        require_once('./config/urlaub.php');
         require_once('./config/limits.php');
+        include_once('./config/urlaub.php');
 
         // determine next month
         $now = getdate();
-        $this->target_month = $now['mon'] + 1;
+        $this->target_month = sprintf('%02d', $now['mon'] + 1);
         $this->target_year = $now['mon'] == 12 ? $now['year'] + 1 : $now['year'];
+
+        include_once('./config/wishes_'.$this->target_month.'_'.$this->target_year.'.php');
 
         $this->days_in_target_month = cal_days_in_month(CAL_GREGORIAN, $this->target_month, $this->target_year);
 
@@ -54,12 +55,12 @@ class dienstplan {
         global $config;
         for ($i=1; $i < $config['limits']['max_iterations']; $i++) {
             if(true == $this->find_working_plan()) {
-                echo "after $i iterations i found a working solution :-)";
+                $this->message.= "after $i iterations i found a working solution :-)";
                return;
             }
         }
         // if we got here, no solution was found
-        echo "after $i iterations i found NO working solution ;-/ <br> consider adapting the limits";
+        $this->message.= "after $i iterations i found NO working solution ;-/ <br> consider adapting the limits<br>";
     }
 
     function find_candidate($day) {

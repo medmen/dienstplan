@@ -221,6 +221,7 @@ $output.= '</div><input type="submit" name="dpupdate"></form>';
         <article id="main" class="nine columns">
             <?php   echo $output; ?>
         </article>
+<!--
         <div class="two columns">
             <aside>
                 <pre>here be dragons</pre>
@@ -229,6 +230,7 @@ $output.= '</div><input type="submit" name="dpupdate"></form>';
                 <pre>here too</pre>
             </aside>
         </div>
+-->
     </section>
 </div>
 </body>
