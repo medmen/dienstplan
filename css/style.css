@@ -7,10 +7,10 @@ body {
 }
 
 body {
-    background-image: url("/images/hintergrund.jpg");
+    background-image: url("../images/hintergrund.jpg");
     /** gradient HAS To be in line before image to show up!! **/
     background-image: linear-gradient(to right, rgba(200,200,200,0.8), rgba(123,123,123,0.9)),
-        url("/images/hintergrund.jpg");
+        url("../images/hintergrund.jpg");
 
     /* Background image is centered vertically and horizontally at all times */
     background-position: center center;
