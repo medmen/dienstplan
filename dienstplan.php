@@ -23,7 +23,10 @@ class dienstplan {
         $this->target_month = sprintf('%02d', $now['mon'] + 1);
         $this->target_year = $now['mon'] == 12 ? $now['year'] + 1 : $now['year'];
 
-        include_once('./config/wishes_'.$this->target_month.'_'.$this->target_year.'.php');
+        $wishes_file = './config/wishes_'.$this->target_month.'_'.$this->target_year.'.php';
+        if (file_exists($wishes_file)) {
+            include_once($wishes_file);
+        }
 
         $this->days_in_target_month = cal_days_in_month(CAL_GREGORIAN, $this->target_month, $this->target_year);
 
@@ -261,10 +264,9 @@ class dienstplan {
             $count_woche = $count_woche + $stat['woche'];
         }
         if($count_cand > 0) {
-            // number_format($count_we / $count_cand, 2, ',', '.');
-            $this->statistics['average']['we'] = $count_we / $count_cand;
-            $this->statistics['average']['fr'] = $count_fr / $count_cand;
-            $this->statistics['average']['woche'] = $count_woche / $count_cand;
+            $this->statistics['average']['we'] = number_format($count_we / $count_cand, 2, ',', '.');
+            $this->statistics['average']['fr'] = number_format($count_fr / $count_cand, 2, ',', '.');
+            $this->statistics['average']['woche'] = number_format($count_woche / $count_cand, 2, ',', '.');
         }
     }
 

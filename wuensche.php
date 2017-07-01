@@ -41,7 +41,10 @@ class wuensche{
     }
 
     function load_wishes() {
-        include_once('./config/wishes_'.$this->target_month.'_'.$this->target_year.'.php');
+        $wishes_file = './config/wishes_'.$this->target_month.'_'.$this->target_year.'.php';
+        if (file_exists($wishes_file)) {
+            include_once($wishes_file);
+        }
     }
 
     function get_duty($person) {
