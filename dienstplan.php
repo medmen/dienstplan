@@ -71,6 +71,14 @@ class dienstplan {
         // start with random people
         $people_available = $config['people'];
         shuffle($people_available); // randomize order
+
+        // see if wishes exist for current day
+        $wish_fulfilled = $this->candidate_has_duty_wish($day, $people_available);
+        if($wish_fulfilled) {
+            $this->debug[] = array($day, $wish_fulfilled, 'wish_granted');
+            return $wish_fulfilled;
+        }
+
         foreach($people_available as $candidate) {
             if($this->had_duty_previous_day($candidate, $day)) {
                $this->debug[] = array($day, $candidate, 'duty_prev');
@@ -100,6 +108,45 @@ class dienstplan {
             }
             // All checks passed, include candidate
             return $candidate;
+        }
+    }
+
+    function candidate_has_duty_wish($day, $people_available) {
+        global $config;
+        $wishes_file = './config/wishes_'.$this->target_month.'_'.$this->target_year.'.php';
+        if (file_exists($wishes_file)) {
+            include_once($wishes_file);
+        } else {
+            $this->message.= 'für den Monat '.$this->target_month.'/'.$this->target_year.' existieren noch keine Wünsche!';
+            return false;
+        }
+
+        // for date comparison we need to turn $day into a date object
+        $day = DateTime::createFromFormat("U", $this->full_date($day));
+
+        //randomize wishes preserving keys, otherwise alphabetic sorting of names would prefer certain people
+        // see http://php.net/manual/en/function.shuffle.php#121088
+        uksort($config['wishes']['duty'], function ($a, $b) {return mt_rand(-10, 10);});
+
+        foreach ($config['wishes']['duty'] as $candidate => $wish_arr) {
+            foreach($wish_arr as $wish) {
+                /**
+                 * wish by convention can be either a range of dates consisting
+                 * of a start date and end date or a single date
+                 **/
+                // very crude check, TODO: make date storage and retrieval much safer
+                $wish_limits = explode('~', $wish);
+                if(count($date_limits) == 2) {
+                    $start_date = new DateTime(trim($wish_limits[0]));
+                    $end_date = new DateTime(trim($wish_limits[1]));
+                } else { // assume only a single date entry is given, see @TODO for this
+                    $start_date = $end_date = new DateTime(trim($wish_limits[0]));
+                }
+
+                if($this->isInDateRange($day, $start_date, $end_date)) {
+                    return $candidate;
+                }
+            }
         }
     }
 
@@ -299,7 +346,7 @@ class dienstplan {
         }
         $stat_tbl.= "</table><hr>";
 
-        $debug_tbl = "<table><thead><tr><th>TAG</th><th>NAME</th><th>GEHT-NICHT-GRUND</th></tr></thead>";
+        $debug_tbl = "<table><thead><tr><th>TAG</th><th>NAME</th><th>GETH/GEHT-NICHT GRUND</th></tr></thead>";
         $debug_tbl.= "<tfoot><tr><td colspan=3>yet another GaLF gimmik</td></tr></tfoot>";
         foreach ($this->debug as $dbg) {
             $debug_tbl.= "<tr><td>".$dbg[0]."</td><td>".$dbg[1]."</td><td>".$dbg[2]."</td></tr>";
