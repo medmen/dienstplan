@@ -13,6 +13,7 @@ error_reporting(E_ERROR | E_WARNING | E_PARSE);
 class dienstplan {
     function __construct()
     {
+        require_once('./config/general.php');
         // load people
         require_once('./config/people.php');
         require_once('./config/limits.php');
@@ -372,6 +373,15 @@ class dienstplan {
     }
 
     // HELPER FUNCTIONS
+    function getdebug() {
+        global $config;
+        if(true == $config['general']['debug']) {
+            return $this->debug;
+        } else {
+            return false;
+        }
+    }
+
     function isInDateRange(DateTime $date, DateTime $startDate, DateTime $endDate) {
         return $date >= $startDate && $date <= $endDate;
     }
