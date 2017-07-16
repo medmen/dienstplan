@@ -118,7 +118,69 @@ class wuensche{
     }
 
     function get_noduty($person) {
-        return '<input  class="datepicker" type="text" size="15" name="noduty_'.$person.'" id="noduty_'.$person.'_0" placeholder="Dienstfrei-Wunsch">'."<br>";
+        global $config;
+        $ret = ''; // initialize string we will return
+        $counter = 0;
+        $first_of_month = new DateTime($this->target_year.'-'.$this->target_month.'-1');
+        $last_of_month = new DateTime($this->target_year.'-'.$this->target_month.'-'.$this->max_days_in_target_month);
+
+        if (is_array($config['wishes']['noduty']) and array_key_exists($person, $config['wishes']['noduty'])) {
+            foreach($config['wishes']['noduty'][$person] as $wid => $wish_date) {
+                if(empty($wish_date)) {
+                    // arrays are stored with trailing comma, so there will be empty array elements
+                    continue;
+                }
+                $this->debug[] = "for $person wid is $wid and noduty-wishdate is ".var_export($wish_date, true);
+                /**
+                 * by convention a wish can be either a range of dates consisting
+                 * of a start date and end date or a single date
+                 **/
+                // very crude check, TODO: make date storage and retrieval much safer
+                $date_limits = explode('~', $wish_date);
+                if(count($date_limits) == 2) {
+                    $start_date = new DateTime(trim($date_limits[0]));
+                    $end_date = new DateTime(trim($date_limits[1]));
+                } else { // assume only a single date entry is given, see @TODO for this
+                    $start_date = $end_date = new DateTime(trim($date_limits[0]));
+                }
+
+                $this->debug[] = "StartDate is ".$start_date->format('d.m.Y')." AND EndDate is ".$end_date->format('d.m.Y');
+                // see if whole period is in target month, chop otherwise
+                $start_in_range = $this->isInDateRange($start_date, $first_of_month, $last_of_month);
+                $end_in_range = $this->isInDateRange($end_date, $first_of_month, $last_of_month);
+                $this->debug[] = "StartDate is in range: $start_in_range AND ";
+                $this->debug[] = "EndDate is in range: $end_in_range <br>";
+
+                $ret.= '<input class="datepicker" type="text" size="15" name="noduty_'.$person.'[]" id="noduty_'.$person.'_'.$counter.'" placeholder="Dienstfrei-Wunsch"';
+                if($start_in_range && $end_in_range) {
+                    if($start_date == $end_date) {
+                        $ret.= ' value="'.$start_date->format('d.m.Y').'"';
+                        $ret.= '><script id="snoduty_'.$person.'_'.$counter.'"> $(function() { $("#noduty_'.$person.'_'.$counter.'").dateRangePicker($.datepicker_settings_single); });</script>'."<br>\n";
+                    } else {
+                        $ret.= ' value="'.$start_date->format('d.m.Y').' ~ '.$end_date->format('d.m.Y').'"';
+                        $ret.= '><script id="snoduty_'.$person.'_'.$counter.'"> $(function() { $("#noduty_'.$person.'_'.$counter.'").dateRangePicker($.datepicker_settings); });</script>'."<br>\n";
+                    }
+                }
+                elseif ($start_in_range) {
+                    $ret.= ' value="'.$start_date->format('d.m.Y').' ~ '.$last_of_month->format('d.m.Y').'"';
+                    $ret.= '><script id="snoduty_'.$person.'_'.$counter.'"> $(function() { $("#noduty_'.$person.'_'.$counter.'").dateRangePicker($.datepicker_settings); });</script>'."<br>\n";
+                }
+                elseif ($end_in_range) {
+                    $ret.= ' value="'.$first_of_month->format('d.m.Y').' ~ '.$end_date->format('d.m.Y').'"';
+                    $ret.= '><script id="snoduty_'.$person.'_'.$counter.'"> $(function() { $("#noduty_'.$person.'_'.$counter.'").dateRangePicker($.datepicker_settings); });</script>'."<br>\n";
+                }
+
+                // Field filled, now raise the counter!
+                $counter++;
+            }
+        } else {
+            $this->debug[] = "$person is not in noduty";
+        }
+        // no matter if duties were found, we have to return at least 1 empty field to fill out
+        $ret.= '<input class="datepicker" type="text" size="15" name="noduty_'.$person.'[]" id="noduty_'.$person.'_'.$counter.'" placeholder="Dienstfrei-Wunsch">';
+        $ret.= '<script id="snoduty_'.$person.'_'.$counter.'"> $(function() { $("#noduty_'.$person.'_'.$counter.'").dateRangePicker($.datepicker_settings); });</script>'."<br>\n";
+        return $ret;
+        // return '<input  class="datepicker" type="text" size="15" name="noduty_'.$person.'" id="noduty_'.$person.'_0" placeholder="Dienstfrei-Wunsch">'."<br>";
     }
 
     function save($wuensche_arr) {
@@ -161,10 +223,28 @@ class wuensche{
     function getdebug() {
         global $config;
         if(true == $config['general']['debug']) {
-            return $this->debug;
+            return $this->array_flatten($this->debug);
         } else {
             return false;
         }
+    }
+
+    function array_flatten($array = null) {
+        $result = array();
+
+        if (!is_array($array)) {
+            $array = func_get_args();
+        }
+
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                $result = array_merge($result, $this->array_flatten($value));
+            } else {
+                $result = array_merge($result, array($key => $value));
+            }
+        }
+
+        return $result;
     }
 
     function isInDateRange(DateTime $date, DateTime $startDate, DateTime $endDate) {
@@ -258,9 +338,10 @@ $debug = $wuensche->getdebug();
     <?php include 'navigation.html';?>
     <h1>WÜNSCHE für <?php echo $monat_formatiert; ?></h1>
 
-    <?php if($debug): ?>
+    <?php var_export($debug); ?>
+    <?php if(is_array($debug)): ?>
     <section class="row">
-        <aside><?php var_export($debug); ?></aside>
+        <aside><?php implode("<br>\n", $debug); ?></aside>
     </section>
     <?php endif; ?>
 

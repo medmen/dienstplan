@@ -81,6 +81,11 @@ class dienstplan {
         }
 
         foreach($people_available as $candidate) {
+            if($this->has_noduty_wish($candidate, $day)) {
+                $this->debug[] = array($day, $candidate, 'noduty_wish');
+                continue;
+            }
+
             if($this->had_duty_previous_day($candidate, $day)) {
                $this->debug[] = array($day, $candidate, 'duty_prev');
                 continue;
@@ -109,6 +114,26 @@ class dienstplan {
             }
             // All checks passed, include candidate
             return $candidate;
+        }
+    }
+
+    function has_noduty_wish($candidate, $day) {
+        global $config;
+        $wishes_file = './config/wishes_'.$this->target_month.'_'.$this->target_year.'.php';
+        if (file_exists($wishes_file)) {
+            include_once($wishes_file);
+        } else {
+            $this->message.= 'für den Monat '.$this->target_month.'/'.$this->target_year.' existieren noch keine Wünsche!';
+            return false;
+        }
+
+        // for date comparison we need to turn $day into a date object
+        $day = DateTime::createFromFormat("U", $this->full_date($day));
+        foreach ($config['wishes']['noduty'][$candidate] as $id => $date) {
+            // punycode: if $day == $date return true
+            //
+            // GTH
+            //
         }
     }
 
@@ -376,10 +401,27 @@ class dienstplan {
     function getdebug() {
         global $config;
         if(true == $config['general']['debug']) {
-            return $this->debug;
+            return $this->array_flatten($this->debug);
         } else {
             return false;
         }
+    }
+
+    function array_flatten($array = null) {
+        $result = array();
+
+        if (!is_array($array)) {
+            $array = func_get_args();
+        }
+
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                $result = array_merge($result, $this->array_flatten($value));
+            } else {
+                $result = array_merge($result, array($key => $value));
+            }
+        }
+        return $result;
     }
 
     function isInDateRange(DateTime $date, DateTime $startDate, DateTime $endDate) {
