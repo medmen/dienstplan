@@ -33,6 +33,7 @@ class dienstplan {
 
         $this->dienstplan = array();
         $this->statistics = array();
+        $this->reasons = array();
         $this->debug = array();
     }
 
@@ -47,6 +48,7 @@ class dienstplan {
                 // make sure we clear all gathered data
                 $this->dienstplan = array();
                 $this->statistics = array();
+                $this->reasons = array();
                 $this->debug = array();
                 return false;
             }
@@ -75,41 +77,42 @@ class dienstplan {
 
         // see if wishes exist for current day
         $wish_fulfilled = $this->candidate_has_duty_wish($day, $people_available);
-        if($wish_fulfilled) {
-            $this->debug[] = array($day, $wish_fulfilled, 'wish_granted');
+        if($wish_fulfilled and !$this->had_duty_previous_day($wish_fulfilled, $day)) {
+            // TODO: check if we need more tests here to avoid unfair treatment
+            $this->reasons[] = array($day, $wish_fulfilled, 'wish_granted');
             return $wish_fulfilled;
         }
 
         foreach($people_available as $candidate) {
             if($this->has_noduty_wish($candidate, $day)) {
-                $this->debug[] = array($day, $candidate, 'noduty_wish');
+                $this->reasons[] = array($day, $candidate, 'noduty_wish');
                 continue;
             }
 
             if($this->had_duty_previous_day($candidate, $day)) {
-               $this->debug[] = array($day, $candidate, 'duty_prev');
+               $this->reasons[] = array($day, $candidate, 'duty_prev');
                 continue;
             }
 
             if($this->is_on_vacation($candidate, $day)) {
-                $this->debug[] = array($day, $candidate, 'urlaub');
+                $this->reasons[] = array($day, $candidate, 'urlaub');
                 continue;
             }
             if($this->limit_reached_total($candidate, $day)) {
                 // $softlimits[$day][] = array($candidate, $priority=5);
-                $this->debug[] = array($day, $candidate, 'limit_total');
+                $this->reasons[] = array($day, $candidate, 'limit_total');
                 continue;
             }
 
             if($this->limit_reached_weekend($candidate, $day)) {
                 // $softlimits[$day][] = array($candidate, $priority=5);
-                $this->debug[] = array($day, $candidate, 'limit_we');
+                $this->reasons[] = array($day, $candidate, 'limit_we');
                 continue;
             }
 
             if($this->is_uneven_distribution($candidate, $day)) {
                 // $softlimits[$day][] = array($candidate, $priority=1);
-                $this->debug[] = array($day, $candidate, 'uneven');
+                $this->reasons[] = array($day, $candidate, 'uneven');
                 continue;
             }
             // All checks passed, include candidate
@@ -129,12 +132,27 @@ class dienstplan {
 
         // for date comparison we need to turn $day into a date object
         $day = DateTime::createFromFormat("U", $this->full_date($day));
-        foreach ($config['wishes']['noduty'][$candidate] as $id => $date) {
-            // punycode: if $day == $date return true
-            //
-            // GTH
-            //
+        if(!is_array($config['wishes']['noduty'][$candidate])) {
+            //no wishes found for $candidate
+            return false;
         }
+        foreach ($config['wishes']['noduty'][$candidate] as $id => $wish) {
+            $wish_limits = explode('~', $wish);
+
+            if(count($wish_limits) == 2) {
+                $start_date = new DateTime(trim($wish_limits[0]));
+                $end_date = new DateTime(trim($wish_limits[1]));
+            } else { // assume only a single date entry is given, see @TODO for this
+                $start_date = $end_date = new DateTime(trim($wish_limits[0]));
+            }
+
+            if($this->isInDateRange($day, $start_date, $end_date)) {
+                $this->debug[] = "for $candidate a noduty wish for ".$start_date->format('Y-m-d')." till ".$end_date->format('Y-m-d')." indludes actual day ".$day->format('Y-m-d');
+                return true;
+            }
+        }
+        // if we made it here there all test have yielded no result
+        return false;
     }
 
     function candidate_has_duty_wish($day, $people_available) {
@@ -162,7 +180,7 @@ class dienstplan {
                  **/
                 // very crude check, TODO: make date storage and retrieval much safer
                 $wish_limits = explode('~', $wish);
-                if(count($date_limits) == 2) {
+                if(count($wish_limits) == 2) {
                     $start_date = new DateTime(trim($wish_limits[0]));
                     $end_date = new DateTime(trim($wish_limits[1]));
                 } else { // assume only a single date entry is given, see @TODO for this
@@ -374,7 +392,7 @@ class dienstplan {
 
         $debug_tbl = "<table><thead><tr><th>TAG</th><th>NAME</th><th>GETH/GEHT-NICHT GRUND</th></tr></thead>";
         $debug_tbl.= "<tfoot><tr><td colspan=3>yet another GaLF gimmik</td></tr></tfoot>";
-        foreach ($this->debug as $dbg) {
+        foreach ($this->reasons as $dbg) {
             $debug_tbl.= "<tr><td>".$dbg[0]."</td><td>".$dbg[1]."</td><td>".$dbg[2]."</td></tr>";
         }
         $debug_tbl.= "</table><hr>";
@@ -433,4 +451,3 @@ class dienstplan {
     }
 
 }
-?>
