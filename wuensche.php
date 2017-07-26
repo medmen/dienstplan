@@ -251,10 +251,6 @@ class wuensche{
         return($date >= $startDate && $date <= $endDate);
     }
 
-    function full_date($target_day) {
-        return(strtotime($this->target_year.'-'.$this->target_month.'-'.$target_day));
-    }
-
     function array_remove_empty_recursive($haystack)
     {
         foreach ($haystack as $key => $value) {
@@ -286,6 +282,7 @@ if($_POST['dpupdate']) {
 $wuensche->load_wishes();
 
 $output = '<form id="frm_duty" method= "post" action="./wuensche.php"><div class="gridcontainer">';
+$output.= '<div class="box">Name</div>'."\n".'<div class="box">Dienstwunsch</div>'."\n".'<div class="box">Frei-Wunsch</div>'."\n";
 foreach($config['people'] as $person) {
     $person = trim($person);
     $output.= '<div id="person_'.$person.'" class="box">'.$person.'</div>'."\n";

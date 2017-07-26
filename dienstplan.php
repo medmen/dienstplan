@@ -77,7 +77,7 @@ class dienstplan {
 
         // see if wishes exist for current day
         $wish_fulfilled = $this->candidate_has_duty_wish($day, $people_available);
-        if($wish_fulfilled and !$this->had_duty_previous_day($wish_fulfilled, $day)) {
+        if($wish_fulfilled){ // and !$this->had_duty_previous_day($wish_fulfilled, $day)) {
             // TODO: check if we need more tests here to avoid unfair treatment
             $this->reasons[] = array($day, $wish_fulfilled, 'wish_granted');
             return $wish_fulfilled;
@@ -130,8 +130,9 @@ class dienstplan {
             return false;
         }
 
+
         // for date comparison we need to turn $day into a date object
-        $day = DateTime::createFromFormat("U", $this->full_date($day));
+        $day = $this->full_date($day);
         if(!is_array($config['wishes']['noduty'][$candidate])) {
             //no wishes found for $candidate
             return false;
@@ -151,7 +152,7 @@ class dienstplan {
                 return true;
             }
         }
-        // if we made it here there all test have yielded no result
+        // if we made it here all test have yielded no result
         return false;
     }
 
@@ -166,7 +167,7 @@ class dienstplan {
         }
 
         // for date comparison we need to turn $day into a date object
-        $day = DateTime::createFromFormat("U", $this->full_date($day));
+        $day = $this->full_date($day);
 
         //randomize wishes preserving keys, otherwise alphabetic sorting of names would prefer certain people
         // see http://php.net/manual/en/function.shuffle.php#121088
@@ -188,7 +189,10 @@ class dienstplan {
                 }
 
                 if($this->isInDateRange($day, $start_date, $end_date)) {
+                    $this->debug[] = "for $candidate a duty wish for ".$day->format('Y-m-d')." comes true :)";
                     return $candidate;
+                } else {
+                   $this->debug[] = "for $candidate a duty wish between ".$start_date->format('Y-m-d')." and ".$end_date->format('Y-m-d').' does not cover actual day '.$day->format('Y-m-d');
                 }
             }
         }
@@ -196,14 +200,14 @@ class dienstplan {
 
     function is_uneven_distribution($candidate, $day) {
         // i sassume that statistics should be filled only until today
-        $day_of_week = date('w', $this->full_date($day));
+        $day_of_week = $this->full_date($day)->format('N');
         $day_type = null;
         switch ($day_of_week) {
-            case 4:
+            case 5:
                 $day_type = 'fr';
                 break;
-            case 5:
             case 6:
+            case 7:
                 $day_type = 'we';
             default:
                 $day_type = 'woche';
@@ -292,7 +296,7 @@ class dienstplan {
     }
 
     function update_statistics($candidate, $day) {
-        $day_of_week = date('w', $this->full_date($day));
+        $day_of_week = $this->full_date($day)->format('N');
         // initialize arrays
         if(!is_array($this->statistics['maximum'])){
             $this->statistics['maximum']['fr'] = 0;
@@ -314,7 +318,7 @@ class dienstplan {
         }
 
         switch($day_of_week) {
-            case 4:
+            case 5:
                 // its a friday
                 $this->statistics[$candidate]['fr']++;
                 // set maximum if we breach it
@@ -322,8 +326,8 @@ class dienstplan {
                     $this->statistics['maximum']['fr'] = $this->statistics[$candidate]['fr'];
                 }
                 break;
-            case 5:
             case 6:
+            case 7:
                 // its a weekend
                 $this->statistics[$candidate]['we']++;
                 // set maximum if we breach it
@@ -365,13 +369,13 @@ class dienstplan {
         $tbl = "<table><thead><tr><th>TAG</th><th>Diensthabende(r)</th></tr></thead>";
         $tbl.= "<tfoot><tr><td colspan=2>yet another GaLF gimmik</td></tr></tfoot>";
         foreach ($this->dienstplan as $dday => $cand) {
-            $day_of_week = date('w', $this->full_date($dday));
+            $day_of_week = $this->full_date($dday)->format('N');
             switch($day_of_week) {
-                case 4:
+                case 5:
                     $class = ' class="fr" ';
                     break;
-                case 5:
                 case 6:
+                case 7:
                     $class = ' class="we" ';
                     break;
                 default:
@@ -443,11 +447,12 @@ class dienstplan {
     }
 
     function isInDateRange(DateTime $date, DateTime $startDate, DateTime $endDate) {
-        return $date >= $startDate && $date <= $endDate;
+        return($date >= $startDate and $date <= $endDate); // true or false
     }
 
     function full_date($target_day) {
-        return(strtotime($this->target_year.'-'.$this->target_month.'-'.$target_day));
+        $fulldate = $this->target_year.'-'.$this->target_month.'-'.$target_day;
+        return(new DateTime(trim($fulldate)));
     }
 
 }

@@ -16,7 +16,7 @@ $debug = $dienstplan->getdebug();
 
     <?php if($debug): ?>
         <section class="row">
-            <aside><?php implode("<br>\n", $debug); ?></aside>
+            <aside><?php echo implode("<br>\n", $debug); ?></aside>
         </section>
     <?php endif; ?>
 
