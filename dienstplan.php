@@ -77,7 +77,7 @@ class dienstplan {
 
         // see if wishes exist for current day
         $wish_fulfilled = $this->candidate_has_duty_wish($day, $people_available);
-        if($wish_fulfilled){ // and !$this->had_duty_previous_day($wish_fulfilled, $day)) {
+        if($wish_fulfilled and !$this->had_duty_previous_day($wish_fulfilled, $day)) {
             // TODO: check if we need more tests here to avoid unfair treatment
             $this->reasons[] = array($day, $wish_fulfilled, 'wish_granted');
             return $wish_fulfilled;
