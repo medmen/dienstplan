@@ -126,10 +126,10 @@ class dienstplan {
         if (file_exists($wishes_file)) {
             include_once($wishes_file);
         } else {
-            $this->message.= 'für den Monat '.$this->target_month.'/'.$this->target_year.' existieren noch keine Wünsche!';
+            // do not repeat this message over and over again
+            $this->message = 'für den Monat '.$this->target_month.'/'.$this->target_year.' existieren noch keine Wünsche in '.__FUNCTION__.'!';
             return false;
         }
-
 
         // for date comparison we need to turn $day into a date object
         $day = $this->full_date($day);
@@ -137,6 +137,7 @@ class dienstplan {
             //no wishes found for $candidate
             return false;
         }
+
         foreach ($config['wishes']['noduty'][$candidate] as $id => $wish) {
             $wish_limits = explode('~', $wish);
 
@@ -162,12 +163,16 @@ class dienstplan {
         if (file_exists($wishes_file)) {
             include_once($wishes_file);
         } else {
-            $this->message.= 'für den Monat '.$this->target_month.'/'.$this->target_year.' existieren noch keine Wünsche!';
+            $this->message = 'für den Monat '.$this->target_month.'/'.$this->target_year.' existieren noch keine Wünsche in '.__FUNCTION__.'!';
             return false;
         }
 
         // for date comparison we need to turn $day into a date object
         $day = $this->full_date($day);
+
+        if(!is_array($config['wishes']['duty'])) {
+           return false;
+        }
 
         //randomize wishes preserving keys, otherwise alphabetic sorting of names would prefer certain people
         // see http://php.net/manual/en/function.shuffle.php#121088
