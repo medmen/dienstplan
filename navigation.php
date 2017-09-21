@@ -2,7 +2,10 @@
     <li class="two columns"><a href="index.php">Dienstplan</a></li>
     <li class="two columns"><a href="urlaub.php">Urlaub</a></li>
     <li class="two columns"><a href="wuensche.php">Wünsche</a></li>
-    <li class="two columns"><a href="hilfe.php">Hilfe</a></li>
+<?php if(isset($_SESSION['username'])): ?>
+    <li class="two columns"><a href="login.php?logout=logout"><?php echo $_SESSION['username']; ?> (logout)</a></li>
+<?php else: ?>
+    <li class="two columns"><a href="login.php">login</a></li>
+<?php endif ?>
     <li class="two columns"><a href="doku.php">Dokumentation</a></li>
-    <li class="two columns"><a href="about.php">über mich</a></li>
 </ul>

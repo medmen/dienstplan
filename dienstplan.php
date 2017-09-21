@@ -11,6 +11,8 @@ error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
 
 class dienstplan {
+    private $messages = array();
+
     function __construct()
     {
         require_once('./config/general.php');
@@ -23,6 +25,9 @@ class dienstplan {
         $now = getdate();
         $this->target_month = sprintf('%02d', $now['mon'] + 1);
         $this->target_year = $now['mon'] == 12 ? $now['year'] + 1 : $now['year'];
+        $monat = new DateTime($this->target_year.'-'.$this->target_month);
+        setlocale(LC_TIME, 'de_DE.UTF-8');
+        $this->readable_month = strftime("%B %Y", $monat->getTimestamp());
 
         $wishes_file = './config/wishes_'.$this->target_month.'_'.$this->target_year.'.php';
         if (file_exists($wishes_file)) {
@@ -41,7 +46,7 @@ class dienstplan {
         for($day = 1; $day <= $this->days_in_target_month; $day++) {
             $candidate = false;
             $candidate = $this->find_candidate($day);
-            if($candidate) {
+            if(is_string($candidate)) {
                 $this->dienstplan[$day] = $candidate;
                 $this->update_statistics($candidate, $day);
             } else {
@@ -61,18 +66,29 @@ class dienstplan {
         global $config;
         for ($i=1; $i < $config['limits']['max_iterations']; $i++) {
             if(true == $this->find_working_plan()) {
-                $this->message.= "after $i iterations i found a working solution :-)";
+                $this->add_message("after $i iterations i found a working solution :-)");
                return;
             }
         }
         // if we got here, no solution was found
-        $this->message.= "after $i iterations i found NO working solution ;-/ <br> consider adapting the limits<br>";
+        $this->add_message("after $i iterations i found NO working solution ;-/ <br> consider adapting the limits<br>");
     }
 
     function find_candidate($day) {
         global $config, $softlimits;
-        // start with random people
-        $people_available = $config['people'];
+        // people may have additional data attached to their username, lets check
+        $people_available = array();
+
+        foreach($config['people'] as $i => $ppl) {
+            if(is_array($ppl)) {
+                $people_available[] = $i;
+            }
+
+            if(is_string($ppl)) {
+                $people_available[] = $ppl;
+            }
+        }
+
         shuffle($people_available); // randomize order
 
         // see if wishes exist for current day
@@ -127,7 +143,7 @@ class dienstplan {
             include_once($wishes_file);
         } else {
             // do not repeat this message over and over again
-            $this->message = 'für den Monat '.$this->target_month.'/'.$this->target_year.' existieren noch keine Wünsche in '.__FUNCTION__.'!';
+            $this->add_message_once('noduty_file_missing','für den Monat '.$this->target_month.'/'.$this->target_year.' existieren noch keine Wünsche in '.__FUNCTION__.'!');
             return false;
         }
 
@@ -163,7 +179,7 @@ class dienstplan {
         if (file_exists($wishes_file)) {
             include_once($wishes_file);
         } else {
-            $this->message = 'für den Monat '.$this->target_month.'/'.$this->target_year.' existieren noch keine Wünsche in '.__FUNCTION__.'!';
+            $this->add_message_once('duty_file_missing','für den Monat '.$this->target_month.'/'.$this->target_year.' existieren noch keine Wünsche in '.__FUNCTION__.'!');
             return false;
         }
 
@@ -424,6 +440,27 @@ class dienstplan {
         }
     }
 
+    function write_excel() {
+        $header = array(
+            'Nr' => 'integer',
+            'Tag' => 'string',
+            'Diensthabender'=>'string',
+        );
+
+        include_once("vendor/PHP_XLSXWriter/xlsxwriter.class.php");
+        $writer = new XLSXWriter();
+        $sheetheader =  $this->readable_month;
+        $filename = 'data/dienstplan_'.$this->target_year.'_'.$this->target_month;
+        $writer->writeSheetHeader($sheetheader, $header );
+        foreach($this->dienstplan as $dday => $cand) {
+            $day_of_week = $this->full_date($dday)->format('N');
+            $row = array($dday,$day_of_week, $cand);
+            $writer->writeSheetRow($sheetheader, $row );
+        }
+        $writer->writeToFile($filename);
+        return '#'.floor((memory_get_peak_usage())/1024)."KB"."\n";
+    }
+
     // HELPER FUNCTIONS
     function getdebug() {
         global $config;
@@ -460,4 +497,18 @@ class dienstplan {
         return(new DateTime(trim($fulldate)));
     }
 
+    public function add_message($message) {
+        $this->messages[] = $message;
+    }
+
+    public function add_message_once($id, $message) {
+        if(!isset($this->$id)) {
+            $this->messages[] = $message;
+            $this->$id = 'sent_before';
+        }
+    }
+
+    public function show_messages() {
+        return(implode("<br>\n", $this->messages));
+    }
 }

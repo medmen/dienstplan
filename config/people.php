@@ -7,6 +7,7 @@
  * Time: 22:50
  */
 global $config;
+/**
 $config['people'] = [
     'anton',
     'berta',
@@ -19,4 +20,14 @@ $config['people'] = [
     'irmfried',
     'juste',
     'knöddelkopp',
+];
+**/
+$config['people'] = [
+    'anton' => ['fullname' => 'Anton Anders', 'pw' => '$2y$10$UksjPYZSegRWY2r4OL8gy.aZZ497DnPqzrZZ.3JeKAxNGMAXmebdm'],
+    'berta' => ['fullname' => 'Berta Besonders', 'pw' => '$2y$10$V/xsQHhRWSVY//se8DXBTugZ7L/yM5tiv4bgy2gwuBG5Zpusd1Ksy', 'is_admin' => true],
+    'conny',
+    'dick',
+    'egon',
+    'floppy',
+    'guste',
 ];

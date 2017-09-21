@@ -263,10 +263,46 @@ class wuensche{
 
         return $haystack;
     }
+
+    function get_people()
+    {
+        global $config;
+        if (!is_array($config['people'])) {
+            return array();
+        }
+
+        $people_available = array();
+        $user_logged_in = $_SESSION['username'];
+
+        // only Admins can change wishes for everyone
+        if (isset($config['people'][$user_logged_in]['is_admin']) and
+            true === $config['people'][$user_logged_in]['is_admin']) {
+            foreach ($config['people'] as $i => $ppl) {
+                if (is_array($ppl)) {
+                    $people_available[] = $i;
+                }
+
+                if (is_string($ppl)) {
+                    $people_available[] = $ppl;
+                }
+            }
+        } else {
+            # logged in user can change own wishes
+            $people_available[] = $user_logged_in;
+        }
+
+        return $people_available;
+    }
 }
 
 // load people
 $wuensche = new wuensche();
+session_start();
+if(!isset($_SESSION['username'])) {
+    session_destroy();
+    header('Location: login.php');
+}
+
 $monat = new DateTime($wuensche->target_year.'-'.$wuensche->target_month);
 setlocale(LC_TIME, 'de_DE.UTF-8');
 $monat_formatiert = strftime("%B %Y", $monat->getTimestamp());
@@ -283,7 +319,7 @@ $wuensche->load_wishes();
 
 $output = '<form id="frm_duty" method= "post" action="./wuensche.php"><div class="gridcontainer">';
 $output.= '<div class="box">Name</div>'."\n".'<div class="box">Dienstwunsch</div>'."\n".'<div class="box">Frei-Wunsch</div>'."\n";
-foreach($config['people'] as $person) {
+foreach($wuensche->get_people() as $person) {
     $person = trim($person);
     $output.= '<div id="person_'.$person.'" class="box">'.$person.'</div>'."\n";
     $output.= '<div id="duty_'.$person.'" class="box autoinput">'.$wuensche->get_duty($person).'</div>'."\n";
@@ -332,10 +368,8 @@ $debug = $wuensche->getdebug();
 </head>
 <body>
 <div class="container">
-    <?php include 'navigation.html';?>
+    <?php include 'navigation.php';?>
     <h1>WÜNSCHE für <?php echo $monat_formatiert; ?></h1>
-
-    <?php var_export($debug); ?>
     <?php if(is_array($debug)): ?>
     <section class="row">
         <aside><?php implode("<br>\n", $debug); ?></aside>

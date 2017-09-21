@@ -1,18 +1,25 @@
 <?php
 require 'dienstplan.php';
 $dienstplan = new dienstplan();
-$monat = new DateTime($dienstplan->target_year.'-'.$dienstplan->target_month);
-setlocale(LC_TIME, 'de_DE.UTF-8');
-$monat_formatiert = strftime("%B %Y", $monat->getTimestamp());
 $dienstplan->generate();
 $debug = $dienstplan->getdebug();
+session_start();
+if(isset($_SESSION['username'])) {
+    $dienstplan->add_message('speichere dienstplan für '.$dienstplan->readable_month);
+} else {
+    session_destroy();
+}
+
 ?>
 <html lang="de">
-<?php include 'header.html';?>
+<head>
+    <?php include 'header.html';?>
+</head>
+
 <body>
 <div class="container">
-    <?php include 'navigation.html';?>
-    <h1>Der Dienstplan für <?php echo $monat_formatiert; ?></h1>
+    <?php include 'navigation.php';?>
+    <h1>Der Dienstplan für <?php echo $dienstplan->readable_month; ?></h1>
 
     <?php if($debug): ?>
         <section class="row">
@@ -21,7 +28,7 @@ $debug = $dienstplan->getdebug();
     <?php endif; ?>
 
     <section class="row">
-        <aside><?php echo $dienstplan->message; ?></aside>
+        <aside><?php echo $dienstplan->show_messages(); ?></aside>
     </section>
 
     <section class="row">
