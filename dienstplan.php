@@ -15,11 +15,11 @@ class dienstplan {
 
     function __construct()
     {
-        require_once('./config/general.php');
+        $this->config = require_once('./config/general.php');
         // load people
-        require_once('./config/people.php');
-        require_once('./config/limits.php');
-        include_once('./config/urlaub.php');
+        $this->config = array_merge($this->config, require_once('./config/people.php'));
+        $this->config = array_merge($this->config, require_once('./config/limits.php'));
+        $this->config = array_merge($this->config, require_once('./config/urlaub.php'));
 
         // determine next month
         $now = getdate();
@@ -40,12 +40,28 @@ class dienstplan {
         $this->statistics = array();
         $this->reasons = array();
         $this->debug = array();
+        $this->current_candidate = null;
     }
+
+    function set_current_candidate($candidate) {
+        global $config;
+
+        if(in_array($candidate, $this->config['people'])) {
+            $this->current_candidate = $candidate;
+            return true;
+        }
+
+        return false;
+    }
+
+    function get_current_candidate() {
+        return $this->current_candidate;
+    }
+
 
     function find_working_plan() {
         for($day = 1; $day <= $this->days_in_target_month; $day++) {
-            $candidate = false;
-            $candidate = $this->find_candidate($day);
+            $candidate = $this->find_candidate($day) ?? false;
             if(is_string($candidate)) {
                 $this->dienstplan[$day] = $candidate;
                 $this->update_statistics($candidate, $day);
@@ -65,7 +81,7 @@ class dienstplan {
     function generate() {
         global $config;
         for ($i=1; $i < $config['limits']['max_iterations']; $i++) {
-            if(true == $this->find_working_plan()) {
+            if($this->find_working_plan()) {
                 $this->add_message("after $i iterations i found a working solution :-)");
                return;
             }
@@ -78,6 +94,7 @@ class dienstplan {
         global $config, $softlimits;
         // people may have additional data attached to their username, lets check
         $people_available = array();
+        $candidate = null;
 
         foreach($config['people'] as $i => $ppl) {
             if(is_array($ppl)) {
@@ -100,6 +117,8 @@ class dienstplan {
         }
 
         foreach($people_available as $candidate) {
+            $this->set_current_candidate($candidate);
+
             if($this->has_noduty_wish($candidate, $day)) {
                 $this->reasons[] = array($day, $candidate, 'noduty_wish');
                 continue;
@@ -132,8 +151,11 @@ class dienstplan {
                 continue;
             }
             // All checks passed, include candidate
+
             return $candidate;
         }
+
+        return $candidate;
     }
 
     function has_noduty_wish($candidate, $day) {
@@ -222,7 +244,7 @@ class dienstplan {
     function is_uneven_distribution($candidate, $day) {
         // i sassume that statistics should be filled only until today
         $day_of_week = $this->full_date($day)->format('N');
-        $day_type = null;
+
         switch ($day_of_week) {
             case 5:
                 $day_type = 'fr';
@@ -234,15 +256,10 @@ class dienstplan {
                 $day_type = 'woche';
         }
 
-        /**
-         * if($this->statistics[$candidate][$day_type] >= $this->statistics['maximum'][$day_type]
-         * and $this->statistics['maximum'][$day_type] > 0
-         ) {
-            return true;
-        }
-         **/
+        $day_type = $this->statistics[$candidate][$day_type] ?? null;
+        $avg_day_type = $this->statistics['average'][$day_type] ?? null;
 
-        if($this->statistics[$candidate][$day_type] > $this->statistics['average'][$day_type] and $this->statistics['average'][$day_type] > 0) {
+        if($day_type > $avg_day_type and $avg_day_type > 0) {
             return true;
         }
 
@@ -293,7 +310,11 @@ class dienstplan {
 
     function limit_reached_total($candidate, $day) {
         global $config;
-        if($this->statistics[$candidate]['total'] >= $config['limits']['total']) {
+
+        $candidate_total = intval($this->statistics[$candidate]['total']) ?? 0;
+        $limit_total = intval($config['limits']['total']) ?? 0;
+
+        if($candidate_total >= $limit_total and $limit_total > 0) {
             return true;
         }
 
@@ -408,9 +429,23 @@ class dienstplan {
 
         $stat_tbl = "<table><thead><tr><th>Name</th><th>Woche</th><th>Fr</th><th>We</th><th>Total</th></tr></thead>";
         $stat_tbl.= "<tfoot><tr><td colspan=5>yet another GaLF gimmik</td></tr></tfoot>";
+
+
+        // sort alphabetically; leave out average and maximum
+        $average = $this->statistics['average'];
+        $maximum = $this->statistics['maximum'];
+        unset($this->statistics['average']);
+        unset($this->statistics['maximum']);
         ksort($this->statistics); //sort statistics by name of persons, preserve array keys!
+        $this->statistics['average'] = $average;
+        $this->statistics['maximum'] = $maximum;
+
         foreach ($this->statistics as $name => $dienste) {
-            $total = $dienste['woche'] + $dienste['fr'] + $dienste['we'];
+            if(!in_array($name, array('average', 'maximum'))) {
+                $total = $dienste['woche'] + $dienste['fr'] + $dienste['we'];
+            } else  {
+                $total = '';
+            }
             $stat_tbl.= "<tr><td>$name</td><td>".$dienste['woche']."</td><td>".$dienste['fr']."</td><td>".$dienste['we']."</td><td>$total</td></>";
         }
         $stat_tbl.= "</table><hr>";
@@ -440,27 +475,69 @@ class dienstplan {
         }
     }
 
-    function write_excel() {
+    /**
+     * @return string
+     */
+    function save() {
+        if(!is_array($this->dienstplan)) {
+            return false;
+        }
+
         $header = array(
             'Nr' => 'integer',
             'Tag' => 'string',
             'Diensthabender'=>'string',
         );
 
-        include_once("vendor/PHP_XLSXWriter/xlsxwriter.class.php");
-        $writer = new XLSXWriter();
         $sheetheader =  $this->readable_month;
         $filename = 'data/dienstplan_'.$this->target_year.'_'.$this->target_month;
+
+        $file_content = "<?php\n";
+        $file_content.= '$dienstplan = '.var_export($this->dienstplan, true).";\n";
+        $file_content.= '$statistics = '.var_export($this->statistics, true).";\n";
+        $file_content.= '$reasons = '.var_export($this->reasons, true).";\n";
+        file_put_contents($filename.'.php', $file_content);
+
+        /**
+        include_once("./vendor/PHP_XLSXWriter/xlsxwriter.class.php");
+        $writer = new XLSXWriter();
         $writer->writeSheetHeader($sheetheader, $header );
         foreach($this->dienstplan as $dday => $cand) {
             $day_of_week = $this->full_date($dday)->format('N');
             $row = array($dday,$day_of_week, $cand);
             $writer->writeSheetRow($sheetheader, $row );
         }
-        $writer->writeToFile($filename);
+        $writer->writeToFile($filename.'.xlsx');
+
+         **/
         return '#'.floor((memory_get_peak_usage())/1024)."KB"."\n";
     }
 
+    function load() {
+        // initialize variables to avoid php8 incompatibilities
+        $dienstplan = null;
+        $statistics = null;
+        $reasons = null;
+
+        $filename = 'data/dienstplan_'.$this->target_year.'_'.$this->target_month.'.php';
+        if(!file_exists($filename)) {
+            return false;
+        }
+        include ($filename);
+
+        if(is_array($dienstplan)) {
+            $this->dienstplan = $dienstplan;
+        }
+
+        if(is_array($statistics)) {
+            $this->statistics = $statistics;
+        }
+
+        if(is_array($reasons)) {
+            $this->reasons = $reasons;
+        }
+        return true;
+    }
     // HELPER FUNCTIONS
     function getdebug() {
         global $config;
