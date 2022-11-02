@@ -5,8 +5,9 @@
  * Date: 09.04.17
  * Time: 12:53
  */
-global $config;
-$config['general'] = [
-    'debug' => true
-    ];
-
+return( array(
+   'general' => [
+        'debug' => true
+        ]
+    )
+);
