@@ -1,4 +1,5 @@
 <?php
+namespace Dienstplan;
 /**
  * Created by PhpStorm.
  * User: galak
@@ -25,7 +26,7 @@ class dienstplan {
         $now = getdate();
         $this->target_month = sprintf('%02d', $now['mon'] + 1);
         $this->target_year = $now['mon'] == 12 ? $now['year'] + 1 : $now['year'];
-        $monat = new DateTime($this->target_year.'-'.$this->target_month);
+        $monat = new \DateTime($this->target_year.'-'.$this->target_month);
         setlocale(LC_TIME, 'de_DE.UTF-8');
         $this->readable_month = strftime("%B %Y", $monat->getTimestamp());
 
@@ -80,7 +81,8 @@ class dienstplan {
 
     function generate() {
         global $config;
-        for ($i=1; $i < $config['limits']['max_iterations']; $i++) {
+        $max_iteration = $config['limits']['max_iterations'] ?? 0;
+        for ($i=1; $i < $max_iteration; $i++) {
             if($this->find_working_plan()) {
                 $this->add_message("after $i iterations i found a working solution :-)");
                return;
@@ -432,8 +434,8 @@ class dienstplan {
 
 
         // sort alphabetically; leave out average and maximum
-        $average = $this->statistics['average'];
-        $maximum = $this->statistics['maximum'];
+        $average = $this->statistics['average'] ?? 0;
+        $maximum = $this->statistics['maximum'] ?? 0;
         unset($this->statistics['average']);
         unset($this->statistics['maximum']);
         ksort($this->statistics); //sort statistics by name of persons, preserve array keys!
@@ -441,12 +443,16 @@ class dienstplan {
         $this->statistics['maximum'] = $maximum;
 
         foreach ($this->statistics as $name => $dienste) {
+            $d_woche = $dienste['woche'] ?? 0;
+            $d_fr = $dienste['fr'] ?? 0;
+            $d_we = $dienste['we'] ?? 0;
+
             if(!in_array($name, array('average', 'maximum'))) {
-                $total = $dienste['woche'] + $dienste['fr'] + $dienste['we'];
+                $total = $d_woche + $d_fr + $d_we;
             } else  {
                 $total = '';
             }
-            $stat_tbl.= "<tr><td>$name</td><td>".$dienste['woche']."</td><td>".$dienste['fr']."</td><td>".$dienste['we']."</td><td>$total</td></>";
+            $stat_tbl.= "<tr><td>$name</td><td>".$d_woche."</td><td>".$d_fr."</td><td>".$d_we."</td><td>$total</td></>";
         }
         $stat_tbl.= "</table><hr>";
 
@@ -541,7 +547,8 @@ class dienstplan {
     // HELPER FUNCTIONS
     function getdebug() {
         global $config;
-        if(true == $config['general']['debug']) {
+        $is_debug_set = $config['general']['debug'] ?? false;
+        if(true == $is_debug_set) {
             return $this->array_flatten($this->debug);
         } else {
             return false;

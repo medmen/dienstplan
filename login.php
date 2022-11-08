@@ -1,4 +1,10 @@
 <?php
+namespace Dienstplan;
+
+// Load Composer packages, and the car.php file
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
 $username = null;
 $password = null;
 
