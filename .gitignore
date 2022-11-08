@@ -15,3 +15,8 @@ Würde js/jquery.daterangepicker.js löschen
 Würde js/moment.min.js löschen
 Würde vendor/ löschen
 /.github/
+vendor/
+.idea/
+.env
+env.php
+config/env.php

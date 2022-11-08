@@ -1,4 +1,5 @@
 <?php
+
 require 'dienstplan.php';
 $dienstplan = new dienstplan();
 
@@ -7,7 +8,7 @@ if(!$dienstplan->load() or $_GET['regenerate']=='regenerate') {
 }
 
 $debug = $dienstplan->getdebug();
-session_start();
+
 if(isset($_SESSION['username'])) {
     $dienstplan->add_message('speichere dienstplan für '.$dienstplan->readable_month);
     $dienstplan->save();
