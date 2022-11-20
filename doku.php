@@ -1,8 +1,8 @@
 <html lang="de">
 <head>
     <?php include 'header.html';?>
-    <script src="js/jquery-3.2.1.min.js"></script>
-    <script src="js/jquery.toc.min.js"></script>
+    <script src="public/js/jquery-3.2.1.min.js"></script>
+    <script src="public/js/jquery.toc.min.js"></script>
 </head>
 <body>
 <div class="container" id="container">

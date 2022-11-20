@@ -1,8 +1,8 @@
 <?php
 
-namespace dienstplan;
+namespace Dienstplan\Worker;
 
-class rules
+class Rules
 {
     function has_noduty_wish($candidate, $day) {
         global $config;
@@ -116,7 +116,7 @@ class rules
         // TODO: deal with first day of month: look for last day of previous month somehow
         if(is_array($this->dienstplan) and
             $day > 1 and
-            $candidate == $this->dienstplan[$day-1]) { // and array_key_exists($day-1, $dienstplan)
+            $candidate == $this->dienstplan[$day-1]) { // and array_key_exists($day-1, $dutyroster)
             return true;
         }
         return false;
