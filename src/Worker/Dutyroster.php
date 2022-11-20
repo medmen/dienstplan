@@ -1,5 +1,5 @@
 <?php
-namespace Dienstplan;
+namespace Dienstplan\Worker;
 /**
  * Created by PhpStorm.
  * User: galak
@@ -11,7 +11,7 @@ ini_set('display_errors', 1);
 error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
 
-class dienstplan {
+class Dutyroster {
     private $messages = array();
 
     function __construct()
@@ -43,6 +43,32 @@ class dienstplan {
         $this->debug = array();
         $this->current_candidate = null;
     }
+
+    /**
+     * @throws \ErrorException
+     */
+    function create_or_show_for_month(string $month_str):array {
+        if(empty($month_str)) {
+            throw new \InvalidArgumentException('Dutyroster::craate_or_show_for_month() expects a month given as MM/YY (e.g.: 12/2022)');
+        }
+        $datetime = new \DateTime::createFromFormat('MM/YY', $month_str);
+        // see if duty roster was saved already
+        // if yes: return it
+        $name_to_find = __DIR__.'/../../data/dienstplan_'.$datetime->format('YY_MM').'.php';
+        if(file_exists($name_to_find)) {
+            return include($name_to_find);
+        }
+
+        // if we got here, no duty roster has been saved for target month yet,
+        // so create it
+
+        if($this->generate() === true) {
+            return $this->dienstplan;
+        }
+
+        throw new \ErrorException('could not find a solution :(');
+    }
+
 
     function set_current_candidate($candidate) {
         global $config;
@@ -84,12 +110,13 @@ class dienstplan {
         $max_iteration = $config['limits']['max_iterations'] ?? 0;
         for ($i=1; $i < $max_iteration; $i++) {
             if($this->find_working_plan()) {
-                $this->add_message("after $i iterations i found a working solution :-)");
-               return;
+               $this->add_message("after $i iterations i found a working solution :-)");
+               return true;
             }
         }
         // if we got here, no solution was found
         $this->add_message("after $i iterations i found NO working solution ;-/ <br> consider adapting the limits<br>");
+        return false;
     }
 
     function find_candidate($day) {
@@ -272,7 +299,7 @@ class dienstplan {
         // TODO: deal with first day of month: look for last day of previous month somehow
         if(is_array($this->dienstplan) and
             $day > 1 and
-            $candidate == $this->dienstplan[$day-1]) { // and array_key_exists($day-1, $dienstplan)
+            $candidate == $this->dienstplan[$day-1]) { // and array_key_exists($day-1, $dutyroster)
             return true;
         }
         return false;
@@ -464,7 +491,7 @@ class dienstplan {
         $debug_tbl.= "</table><hr>";
 
         switch($content){
-            case 'dienstplan':
+            case 'dutyroster':
                 return $tbl;
                 break; // this break should be unnecessary
             case 'statistics':
@@ -499,7 +526,7 @@ class dienstplan {
         $filename = 'data/dienstplan_'.$this->target_year.'_'.$this->target_month;
 
         $file_content = "<?php\n";
-        $file_content.= '$dienstplan = '.var_export($this->dienstplan, true).";\n";
+        $file_content.= '$dutyroster = '.var_export($this->dienstplan, true).";\n";
         $file_content.= '$statistics = '.var_export($this->statistics, true).";\n";
         $file_content.= '$reasons = '.var_export($this->reasons, true).";\n";
         file_put_contents($filename.'.php', $file_content);
@@ -508,7 +535,7 @@ class dienstplan {
         include_once("./vendor/PHP_XLSXWriter/xlsxwriter.class.php");
         $writer = new XLSXWriter();
         $writer->writeSheetHeader($sheetheader, $header );
-        foreach($this->dienstplan as $dday => $cand) {
+        foreach($this->dutyroster as $dday => $cand) {
             $day_of_week = $this->full_date($dday)->format('N');
             $row = array($dday,$day_of_week, $cand);
             $writer->writeSheetRow($sheetheader, $row );

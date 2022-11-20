@@ -1,0 +1,81 @@
+html {
+    height: 100%;
+}
+
+body {
+    min-height: 100%;
+}
+
+body {
+    background-image: url("../images/hintergrund.jpg");
+    /** gradient HAS To be in line before image to show up!! **/
+    background-image: linear-gradient(to right, rgba(200,200,200,0.8), rgba(123,123,123,0.9)),
+        url("../images/hintergrund.jpg");
+
+    /* Background image is centered vertically and horizontally at all times */
+    background-position: center center;
+
+    /* Background image doesn't tile */
+    background-repeat: no-repeat;
+
+    /* Background image is fixed in the viewport so that it doesn't move when
+       the content's height is greater than the image's height */
+    background-attachment: fixed;
+
+    /* This is what makes the background image rescale based
+       on the container's size */
+    background-size: cover;
+
+    /* Set a background color that will be displayed
+       while the background image is loading */
+    background-color: rgba(0,0,0,0.5);
+}
+
+#main table {
+    width: 90%;
+    border: 1px dotted darkgrey;
+}
+
+.fr {
+    font-style: italic;
+}
+
+.we {
+    font-weight: bold;
+}
+
+
+#topnavigation {
+    padding: 1%;
+    margin: 1%;
+    border-bottom: 1px solid silver;
+    border-right: 1px solid silver;
+    border-radius: 10px;
+}
+
+#topnavigation li {
+    list-style: none;
+    text-align: center;
+    border: 1px solid black;
+}
+
+.container {
+    /** background-image: linear-gradient(to bottom right, rgba(123,123,123,0.5), rgba(0,0,0,0.2));*/
+}
+
+/** CSS-Grid **/
+.gridcontainer {
+    width: 100%;
+    min-width: 100%;
+    display: grid;
+    grid-template-columns: 32% 32% 32%;
+    grid-gap: 2%;
+    background-color: rgba(123,123,123,0.5);
+}
+
+.box {
+    background-color: rgba(123,123,123,0.5);
+    border-radius: 5px;
+    padding: 20px;
+    font-size: 105%;
+}

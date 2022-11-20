@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support;
+namespace Dienstplan\Support;
 
 final class Config
 {

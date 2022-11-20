@@ -2,7 +2,7 @@
 Würde .gitignore löschen
 Würde .idea/ löschen
 /config/_people.php
-/css/font-awesome/
+/public/css/font-awesome/
 /composer.json
 /composer.lock
 Würde .idea/workspace.xml löschen

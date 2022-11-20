@@ -1,4 +1,5 @@
 <?php
+namespace Dienstplan\Worker;
 /**
  * Created by PhpStorm.
  * User: galak
@@ -8,7 +9,7 @@
 ini_set('display_errors', 1);
 error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
-class wuensche{
+class Wishes{
     public $monthyear;
 
     function __construct($monthyear = false)
@@ -296,7 +297,7 @@ class wuensche{
 }
 
 // load people
-$wuensche = new wuensche();
+$wuensche = new wishes();
 session_start();
 if(!isset($_SESSION['username'])) {
     session_destroy();
@@ -317,7 +318,7 @@ if($_POST['dpupdate']) {
 
 $wuensche->load_wishes();
 
-$output = '<form id="frm_duty" method= "post" action="./wuensche.php"><div class="gridcontainer">';
+$output = '<form id="frm_duty" method= "post" action="Wishes.php"><div class="gridcontainer">';
 $output.= '<div class="box">Name</div>'."\n".'<div class="box">Dienstwunsch</div>'."\n".'<div class="box">Frei-Wunsch</div>'."\n";
 foreach($wuensche->get_people() as $person) {
     $person = trim($person);
@@ -333,10 +334,10 @@ $debug = $wuensche->getdebug();
 <html lang="de">
 <head>
 <?php include 'header.html';?>
-    <link rel="stylesheet" href="css/daterangepicker.css">
-    <script src="moment.js"></script>
-    <script src="js/jquery-3.2.1.min.js"></script>
-    <script src="js/jq_new-inputfield.js"></script>
+    <link rel="stylesheet" href="../../public/css/daterangepicker.css">
+    <script src="../../index.php"></script>
+    <script src="../../public/js/jquery-3.2.1.min.js"></script>
+    <script src="../../public/js/jq_new-inputfield.js"></script>
     <script>
         $.datepicker_settings =
             {
@@ -364,7 +365,7 @@ $debug = $wuensche->getdebug();
 
 
     </script>
-    <script src="js/jquery.daterangepicker.js"></script>
+    <script src="../../public/js/jquery.daterangepicker.js"></script>
 </head>
 <body>
 <div class="container">
