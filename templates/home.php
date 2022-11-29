@@ -6,15 +6,8 @@
 <table>
     <tbody>
 <?php
-$arr_persons = unserialize($persons);
-foreach ($arr_persons as $nam => $arr_vals) {
-    echo "<tr>\n";
-    if (is_array($arr_vals) and array_key_exists('fullname', $arr_vals)) {
-        echo "<td>".html($arr_vals['fullname'])."</td>";
-    } else {
-        echo "<td>".html($arr_vals)."</td>";
-    }
-    echo "</tr>\n";
+foreach ($dienstplan as $day => $person) {
+    echo "<tr>\n<td>".html($day)."</td><td>".html($person)."</td></tr>\n";
 }
 ?>
     </tbody>

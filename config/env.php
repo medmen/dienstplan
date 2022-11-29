@@ -13,6 +13,13 @@ return function (array $settings): array {
         'guste',
     ];
 
+    $settings['view'] = [
+        // Path to templates
+        'path' => __DIR__ . '/../templates',
+        // Default attributes
+        'attributes' => [],
+    ];
+
     // Docker example
     // if (isset($_ENV['DOCKER'])) {
     //    $settings['db']['host'] = $_ENV['MYSQL_HOST'] ?? 'host.docker.internal';
