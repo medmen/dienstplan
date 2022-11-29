@@ -1,60 +1,51 @@
 <?php
 namespace Dienstplan\Worker;
-/**
- * Created by PhpStorm.
- * User: galak
- * Date: 23.03.17
- * Time: 23:00
- */
-
-ini_set('display_errors', 1);
-error_reporting(E_ERROR | E_WARNING | E_PARSE);
-
 
 class Dutyroster {
     private $messages = array();
+    private $config = array();
+    private $dienstplan = array();
+    private $statistics = array();
+    private $reasons = array();
+    private $current_candidate = null;
+    private $month_string = null;
+    private $month_name = null;
+    private $month_int = null;
+    private $year_int = null;
 
-    function __construct()
+    function __construct(\DateTimeImmutable $target_month)
     {
-        $this->config = require_once('./config/general.php');
-        // load people
-        $this->config = array_merge($this->config, require_once('./config/people.php'));
-        $this->config = array_merge($this->config, require_once('./config/limits.php'));
-        $this->config = array_merge($this->config, require_once('./config/urlaub.php'));
+        // merge all config file for month in on big arrray
+        $this->month_string = $target_month->format('Y_m');
+        $this->month_name = $target_month->format('F');
+        $this->month_int = $target_month->format('m');
+        $this->year_int = $target_month->format('Y');
+        $base_path = __DIR__.'/../../data/';
 
-        // determine next month
-        $now = getdate();
-        $this->target_month = sprintf('%02d', $now['mon'] + 1);
-        $this->target_year = $now['mon'] == 12 ? $now['year'] + 1 : $now['year'];
-        $monat = new \DateTime($this->target_year.'-'.$this->target_month);
-        setlocale(LC_TIME, 'de_DE.UTF-8');
-        $this->readable_month = strftime("%B %Y", $monat->getTimestamp());
+        $conffiles = [];
+        $conffiles['people'] = $base_path.$subconf.'people.php';
+        $conffiles['limits'] = $base_path.$subconf.'limits.php';
 
-        $wishes_file = './config/wishes_'.$this->target_month.'_'.$this->target_year.'.php';
-        if (file_exists($wishes_file)) {
-            include_once($wishes_file);
+        foreach(['wishes', 'urlaub'] as $subconf) {
+            $conffiles[$subconf] = $base_path.$subconf.'_'.$this->month_string.'.php';
         }
 
-        $this->days_in_target_month = cal_days_in_month(CAL_GREGORIAN, $this->target_month, $this->target_year);
+        foreach($conffiles as $conffile) {
+            if (file_exists($conffile)) {
+                $this->config = array_merge($this->config, require_once($conffile));
+            }
+        }
 
-        $this->dienstplan = array();
-        $this->statistics = array();
-        $this->reasons = array();
-        $this->debug = array();
-        $this->current_candidate = null;
+        $this->days_in_target_month = cal_days_in_month(CAL_GREGORIAN, $target_month->format('m'), $target_month->format('Y'));
     }
 
     /**
      * @throws \ErrorException
      */
-    function create_or_show_for_month(string $month_str):array {
-        if(empty($month_str)) {
-            throw new \InvalidArgumentException('Dutyroster::craate_or_show_for_month() expects a month given as MM/YY (e.g.: 12/2022)');
-        }
-        $datetime = new \DateTime::createFromFormat('MM/YY', $month_str);
+    function create_or_show_for_month():array {
         // see if duty roster was saved already
         // if yes: return it
-        $name_to_find = __DIR__.'/../../data/dienstplan_'.$datetime->format('YY_MM').'.php';
+        $name_to_find = __DIR__.'/../../data/dienstplan_'.$this->month_string.'.php';
         if(file_exists($name_to_find)) {
             return include($name_to_find);
         }
@@ -106,8 +97,7 @@ class Dutyroster {
 
 
     function generate() {
-        global $config;
-        $max_iteration = $config['limits']['max_iterations'] ?? 0;
+        $max_iteration = $this->config['limits']['max_iterations'] ?? 0;
         for ($i=1; $i < $max_iteration; $i++) {
             if($this->find_working_plan()) {
                $this->add_message("after $i iterations i found a working solution :-)");
@@ -120,12 +110,12 @@ class Dutyroster {
     }
 
     function find_candidate($day) {
-        global $config, $softlimits;
+
         // people may have additional data attached to their username, lets check
         $people_available = array();
         $candidate = null;
 
-        foreach($config['people'] as $i => $ppl) {
+        foreach($this->config['people'] as $i => $ppl) {
             if(is_array($ppl)) {
                 $people_available[] = $i;
             }
@@ -188,24 +178,15 @@ class Dutyroster {
     }
 
     function has_noduty_wish($candidate, $day) {
-        global $config;
-        $wishes_file = './config/wishes_'.$this->target_month.'_'.$this->target_year.'.php';
-        if (file_exists($wishes_file)) {
-            include_once($wishes_file);
-        } else {
-            // do not repeat this message over and over again
-            $this->add_message_once('noduty_file_missing','für den Monat '.$this->target_month.'/'.$this->target_year.' existieren noch keine Wünsche in '.__FUNCTION__.'!');
-            return false;
-        }
 
         // for date comparison we need to turn $day into a date object
         $day = $this->full_date($day);
-        if(!is_array($config['wishes']['noduty'][$candidate])) {
+        if(!is_array($this->config['wishes']['noduty'][$candidate])) {
             //no wishes found for $candidate
             return false;
         }
 
-        foreach ($config['wishes']['noduty'][$candidate] as $id => $wish) {
+        foreach ($this->config['wishes']['noduty'][$candidate] as $id => $wish) {
             $wish_limits = explode('~', $wish);
 
             if(count($wish_limits) == 2) {
@@ -225,27 +206,19 @@ class Dutyroster {
     }
 
     function candidate_has_duty_wish($day, $people_available) {
-        global $config;
-        $wishes_file = './config/wishes_'.$this->target_month.'_'.$this->target_year.'.php';
-        if (file_exists($wishes_file)) {
-            include_once($wishes_file);
-        } else {
-            $this->add_message_once('duty_file_missing','für den Monat '.$this->target_month.'/'.$this->target_year.' existieren noch keine Wünsche in '.__FUNCTION__.'!');
-            return false;
-        }
 
         // for date comparison we need to turn $day into a date object
         $day = $this->full_date($day);
 
-        if(!is_array($config['wishes']['duty'])) {
+        if(!is_array($this->config['wishes']['duty'])) {
            return false;
         }
 
         //randomize wishes preserving keys, otherwise alphabetic sorting of names would prefer certain people
         // see http://php.net/manual/en/function.shuffle.php#121088
-        uksort($config['wishes']['duty'], function ($a, $b) {return mt_rand(-10, 10);});
+        uksort($this->config['wishes']['duty'], function ($a, $b) {return mt_rand(-10, 10);});
 
-        foreach ($config['wishes']['duty'] as $candidate => $wish_arr) {
+        foreach ($this->config['wishes']['duty'] as $candidate => $wish_arr) {
             foreach($wish_arr as $wish) {
                 /**
                  * wish by convention can be either a range of dates consisting
@@ -306,15 +279,19 @@ class Dutyroster {
     }
 
     function is_on_vacation($candidate, $day) {
-        global $config;
         $target_day = $this->full_date($day);
 
-        // make sure candidate is in urlaub array
-        if(!in_array($candidate, $config['urlaub'])) {
+        // make sure urlaub is array
+        if(!is_array($this->config['urlaub'])) {
             return false;
         }
 
-        foreach ($config['urlaub'][$candidate] as $urlaub_range) {
+        // make sure candidate is in urlaub array
+        if(!in_array($candidate, $this->config['urlaub'])) {
+            return false;
+        }
+
+        foreach ($this->config['urlaub'][$candidate] as $urlaub_range) {
             /**
              * urlaub_range by convention can be either a range of dates consisting
              * of a start date and end date or a single date
@@ -338,10 +315,9 @@ class Dutyroster {
     }
 
     function limit_reached_total($candidate, $day) {
-        global $config;
 
         $candidate_total = intval($this->statistics[$candidate]['total']) ?? 0;
-        $limit_total = intval($config['limits']['total']) ?? 0;
+        $limit_total = intval($this->config['limits']['total']) ?? 0;
 
         if($candidate_total >= $limit_total and $limit_total > 0) {
             return true;
@@ -351,16 +327,14 @@ class Dutyroster {
     }
 
     function limit_reached_weekend($candidate, $day) {
-        global $config;
-        if($this->statistics[$candidate]['we'] >= $config['limits']['we']) {
+        if($this->statistics[$candidate]['we'] >= $this->config['limits']['we']) {
             return true;
         }
         return false;
     }
 
     function limit_reached_friday($candidate, $day) {
-        global $config;
-        if($this->statistics[$candidate]['fr'] >= $config['limits']['fr']) {
+        if($this->statistics[$candidate]['fr'] >= $this->config['limits']['fr']) {
             return true;
         }
         return false;
@@ -523,7 +497,7 @@ class Dutyroster {
         );
 
         $sheetheader =  $this->readable_month;
-        $filename = 'data/dienstplan_'.$this->target_year.'_'.$this->target_month;
+        $filename = 'data/dienstplan_'.$this->month_string;
 
         $file_content = "<?php\n";
         $file_content.= '$dutyroster = '.var_export($this->dienstplan, true).";\n";
@@ -573,8 +547,7 @@ class Dutyroster {
     }
     // HELPER FUNCTIONS
     function getdebug() {
-        global $config;
-        $is_debug_set = $config['general']['debug'] ?? false;
+        $is_debug_set = $this->config['general']['debug'] ?? false;
         if(true == $is_debug_set) {
             return $this->array_flatten($this->debug);
         } else {
@@ -604,8 +577,9 @@ class Dutyroster {
     }
 
     function full_date($target_day) {
-        $fulldate = $this->target_year.'-'.$this->target_month.'-'.$target_day;
-        return(new DateTime(trim($fulldate)));
+
+        $fulldate = $this->year_int.'-'.$this->month_int.'-'.$target_day;
+        return(new \DateTime(trim($fulldate)));
     }
 
     public function add_message($message) {
