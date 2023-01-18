@@ -1,7 +1,8 @@
 <?php $this->setLayout('layout.php'); ?>
 <?php $this->addAttribute('css', ['css/skeleton.css', 'css/normalize.css', 'css/style.css']); ?>
-<?php // $this->addAttribute('js', ['js/.js']); ?>
+<?php $this->addAttribute('js', ['js/flashmessages.js']); ?>
 
+<table>
 <h2>hello <?=$title?></h2>
 <table>
     <tbody>

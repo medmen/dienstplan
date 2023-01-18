@@ -2,6 +2,7 @@
 /config/_people.php
 /public/css/font-awesome/
 /composer.lock
+logs/
 /.github/
 vendor/
 .idea/

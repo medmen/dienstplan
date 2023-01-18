@@ -8,24 +8,29 @@ use Dienstplan\Support\Config;
 use Dienstplan\Worker\Dutyroster;
 use DateTimeImmutable;
 use DateInterval;
+use Odan\Session\SessionInterface;
 
 final class HomeAction
 {
     private PhpRenderer $renderer;
 
-    private $persons, $month, $dienstplan;
+    private $persons, $month, $dienstplan, $session, $flash;
 
-    public function __construct(Config $config, PhpRenderer $renderer)
+    public function __construct(Config $config, PhpRenderer $renderer, SessionInterface $session)
     {
         // Read settings
         $this->persons = serialize($config->get("people"));
         $this->renderer = $renderer;
         $this->month = new DateTimeImmutable('now');
+        $this->session = $session;
     }
 
 
     public function __invoke(Request $request, Response $response, array $args): Response
     {
+        $flash = $this->session->getFlash();
+        $flash->add('info', 'Invoking Home Action');
+
         // if no month was given, use actual month
         $haeh = $args['target_month'];
         $month_given = $request->getQueryParams()['target_month'];
@@ -39,12 +44,17 @@ final class HomeAction
 
             if($nowminus10y < $check_month and $check_month < $nowplus10y) {
                 $this->month = $check_month;
+                $flash->add('info', 'selected month is within 10 years from now');
             } else {
                 throw new \InvalidArgumentException('month given is invalid, older than 10 years or more than 10 years in the future');
             }
         }
+        $flash->add('info', 'selected month is within 10 years from now');
 
-        $this->renderer->addAttribute('title', 'Dienstplan');
+        $formatted_monthyear = \IntlDateFormatter::formatObject($this->month, "MMMM y");
+
+        $this->renderer->addAttribute('flash', $flash->all());
+        $this->renderer->addAttribute('title', 'Dienstplan für '.$formatted_monthyear);
         $this->renderer->addAttribute('persons', $this->persons);
 
         $dutyroster = new Dutyroster($this->month);

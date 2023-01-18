@@ -10,6 +10,7 @@
 <body>
     <div class="container">
     <?= $this->fetch('navbar.php') ?>
+    <?= $this->fetch('flashmessages.php') ?>
     <?= $content ?>
     <?= $this->fetch('footer.php', ['year' => date('Y')]) ?>
     </div>
