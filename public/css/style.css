@@ -1,3 +1,11 @@
+:root {
+    --bg-img: url("../images/hintergrund.jpg");
+    --bg-color: rgba(123,123,123,0.5);
+    --red: #b00;
+    --blue: #00b;
+    --fullwidth: 100%;
+}
+
 html {
     height: 100%;
 }
@@ -7,10 +15,11 @@ body {
 }
 
 body {
-    background-image: url("../images/hintergrund.jpg");
+    /* background-image: url("../images/hintergrund.jpg"); */
+    background-image: var(--bg-img);
     /** gradient HAS To be in line before image to show up!! **/
     background-image: linear-gradient(to right, rgba(200,200,200,0.8), rgba(123,123,123,0.9)),
-    url("../images/hintergrund.jpg");
+    var(--bg-img);
 
     /* Background image is centered vertically and horizontally at all times */
     background-position: center center;
@@ -70,327 +79,26 @@ body {
     display: grid;
     grid-template-columns: 32% 32% 32%;
     grid-gap: 2%;
-    background-color: rgba(123,123,123,0.5);
+    /* background-color: rgba(123,123,123,0.5); */
+    background-color: var(--bg-color);
 }
 
 .box {
-    background-color: rgba(123,123,123,0.5);
+    background-color: var(--bg-color);
     border-radius: 5px;
     padding: 20px;
     font-size: 105%;
 }
 
+/* format day numbers in schedule to 2 digits */
 
-/*  Colors */
-$dark: #616161;
-$white: #fafafa;
-$gray-1: #a4b0be;
-$gray-2: #ced6e0;
-$success-1: #7bed9f;
-$success-2: #25bc63;
-$error-1: #ff6b81;
-$error-2: #ff4757;
-$subtle-gray: #f3f3f4;
-$subtle-gray-2: #dfe4ea;
-$shadow-dark: #212121;
-
-/* Flash messages */
-.container {
-    position: relative;
-    display: flex;
-    width: 720px;
-    height: 100vh;
-    margin: auto;
-    text-align: center;
-    align-items: center;
+.tbl_dienstplan {
+    counter-reset: count 0;
+    border-collapse: separate;
+    border-spacing: 1em;
 }
 
-.success,
-.error {
-    position: relative;
-    width: 20rem;
-    height: 20rem;
-    margin: 0 1rem;
-    border-radius: 50px;
-    box-shadow: 4px 4px 6px rgba($dark, 0.4);
-}
-
-.success {
-    background: linear-gradient(to bottom right, $success-1, $success-2);
-    /*	&::before {
-        content: '';
-        z-index: -1;
-        position: absolute;
-        left: 0;
-        width: 20rem;
-        height: 20rem;
-        background: linear-gradient(to bottom right, $success-1, $success-2);
-        border-radius: 15%;
-        filter: blur(.5rem);
-    } */
-}
-
-.error {
-    background: linear-gradient(to bottom right, $error-1, $error-2);
-    /*	&::before {
-        content: '';
-        z-index: -1;
-        position: absolute;
-        left: 0;
-        width: 20rem;
-        height: 20rem;
-        background: linear-gradient(to bottom right, $error-1, $error-2);
-        border-radius: 15%;
-        filter: blur(.5rem);
-    } */
-}
-
-/* Envelope drawing - SUCCESS */
-.msg-success {
-    position: relative;
-    width: 100px;
-    height: 50px;
-    margin: 4.5rem auto 2.9rem auto;
-    background-color: $subtle-gray-2;
-    border-radius: 5px;
-    animation: float 2s ease-in-out infinite alternate;
-&::before,
-&::after {
-     content: "";
-     position: absolute;
-     border: 0 solid transparent;
-     border-width: 23px 50px;
- }
-&::after {
-     bottom: 1px;
-     left: 0;
-     border-right-color: $subtle-gray-2;
-     border-bottom-color: $subtle-gray;
-     border-left-color: $subtle-gray;
-     border-radius: 0 0 5px 5px;
-     transform: rotate(360deg);
- }
-
-.letter {
-    position: absolute;
-    left: 8px;
-    bottom: 40%;
-    width: 85px;
-    height: 55px;
-    background-color: $white;
-    border-radius: 5px;
-&::before,
-&::after {
-     content: "";
-     position: absolute;
-     bottom: 62%;
-     left: 8px;
-     border: 2px solid $gray-1;
- }
-&::after {
-     width: 70px;
-     box-shadow: 0 9px 0 $gray-2, 0 18px 0 $gray-2, 0 27px 0 $gray-2;
- }
-}
-}
-
-@keyframes float {
-    50% {
-        transform: translateY(-8px);
-    }
-}
-
-/* Envelope drawin - ERROR */
-.msg-error {
-    position: relative;
-    width: 100px;
-    height: 50px;
-    margin: 4.5rem auto 2.9rem auto;
-    /* background-color: $subtle-gray-2; */
-    animation: float 2s ease-in-out infinite alternate;
-&::before,
-&::after {
-     content: "";
-     position: absolute;
-     width: 50px;
-     height: 50px;
-     border-radius: 5px;
- }
-&::before {
-     bottom: 0;
-     left: 50%;
-     background-color: $subtle-gray;
-     transform: rotate(10deg);
-     -webkit-clip-path: polygon(
-             100% 0,
-             100% 100%,
-             16% 100%,
-             0 85%,
-             17% 70%,
-             0 55%,
-             20% 41%,
-             0 30%,
-             20% 13%,
-             0 0
-     );
-     clip-path: polygon(
-             100% 0,
-             100% 100%,
-             16% 100%,
-             0 85%,
-             17% 70%,
-             0 55%,
-             20% 41%,
-             0 30%,
-             20% 13%,
-             0 0
-     );
-     animation: move-left 2s ease-in-out infinite alternate;
- }
-&::after {
-     bottom: 0;
-     right: 60%;
-     background-color: $subtle-gray;
-     transform: rotate(-10deg);
-     -webkit-clip-path: polygon(
-             0% 0%,
-             0% 100%,
-             100% 100%,
-             84% 85%,
-             100% 70%,
-             83% 54%,
-             100% 43%,
-             82% 28%,
-             100% 14%,
-             81% 0
-     );
-     clip-path: polygon(
-             0% 0%,
-             0% 100%,
-             100% 100%,
-             84% 85%,
-             100% 70%,
-             83% 54%,
-             100% 43%,
-             82% 28%,
-             100% 14%,
-             81% 0
-     );
-     animation: move-right 2s ease-in-out infinite alternate;
- }
-
-.letter {
-    z-index: 1000;
-    position: absolute;
-    left: 8px;
-    bottom: 5%;
-    height: 55px;
-&::before,
-&::after {
-     content: "";
-     position: absolute;
-     width: 26px;
-     border: 2px solid $gray-1;
-     box-shadow: 0 9px 0 $gray-2, 0 18px 0 $gray-2, 0 27px 0 $gray-2;
- }
-&::before {
-     bottom: 60%;
-     right: -18px;
-     transform: rotate(-10deg);
-     animation: move-right 2s ease-in-out infinite alternate;
- }
-&::after {
-     bottom: 60%;
-     left: 58px;
-     transform: rotate(10deg);
-     animation: move-left 2s ease-in-out infinite alternate;
- }
-}
-}
-
-@keyframes move-right {
-    from {
-        transform: rotate(-15deg), translateX(0);
-    }
-    to {
-        transform: translateX(8px);
-    }
-}
-
-@keyframes move-left {
-    from {
-        transform: rotate(15deg), translateX(0);
-    }
-    to {
-        transform: translateX(-8px);
-    }
-}
-
-/* Shared */
-.shadow {
-    position: absolute;
-    top: 135px;
-    left: 110px;
-    width: 100px;
-    height: 20px;
-    background-color: $dark;
-    border-radius: 50%;
-    opacity: 0.65;
-    animation: shadow 2s ease-in-out infinite alternate;
-}
-
-@keyframes shadow {
-    50% {
-        transform: scale(0.9);
-    }
-}
-
-/* Title & text of SUCCESS and ERROR */
-.title {
-    font-size: 180%;
-    color: $white;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-}
-
-.message {
-    position: absolute;
-    bottom: 20%;
-    font-size: 110%;
-    color: $white;
-    text-align: center;
-    letter-spacing: 0.5px;
-}
-
-/* Button - Continue & Retry */
-.success,
-.error {
-.btn,
-.btn:focus {
-    position: absolute;
-    bottom: 8%;
-    left: 25%;
-    width: 50%;
-    height: 2.5rem;
-    font-size: 90%;
-    background-color: $white;
-    border: none;
-    border-radius: 50px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    box-shadow: 2px 2px 6px rgba($shadow-dark, 0.4);
-    transition: all 800ms ease-in-out;
-    outline: none;
-    cursor: pointer;
-}
-.btn-success {
-    color: $success-2;
-}
-.btn-error {
-    color: $error-2;
-}
-}
-.red {
-    color: red;
-    background-color: whitesmoke;
+.tbl_dienstplan .day {
+    counter-increment: count 1;
+    content: counter(count, decimal-leading-zero);
 }

@@ -1,4 +1,5 @@
 <?php
+echo '<div class="flashmessages">';
 foreach ($flash as $type => $messages) {
     foreach ($messages as $message) {
         echo '<div class="alert alert-' . $type . '" role="alert">
@@ -9,3 +10,4 @@ foreach ($flash as $type => $messages) {
             '</div>';
     }
 }
+echo '</div>';
