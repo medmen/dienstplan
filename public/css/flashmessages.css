@@ -1,0 +1,72 @@
+.flashmessages {
+    --flash-dark: #616161;
+    --flash-white: #fafafa;
+    --flash-gray-1: #a4b0be;
+    --flash-gray-2: #ced6e0;
+    --flash-success-1: #7bed9f;
+    --flash-success-2: #25bc63;
+    --flash-error-1: #ff6b81;
+    --flash-error-2: #ff4757;
+    --flash-subtle-gray: #f3f3f4;
+    --flash-subtle-gray-2: #dfe4ea;
+    --flash-shadow-dark: #212121;
+}
+
+.flashmessages .alert {
+    font-size: 110%;
+    text-align: center;
+    /* text-transform: uppercase; */
+    letter-spacing: 0.5px;
+    border: 1px solid;
+    border-radius: 50px;
+    border-color: var(--flash-dark);
+    opacity: 0.8;
+    margin-bottom: 0.1em;
+}
+
+.flashmessages .alert {
+    font-size: 110%;
+    text-align: center;
+    /* text-transform: uppercase; */
+    letter-spacing: 0.5px;
+    border: 1px solid;
+    border-radius: 50px;
+    border-color: var(--flash-dark);
+    opacity: 0.8;
+    margin-bottom: 0.1em;
+}
+
+.flashmessages .alert:last-child {
+    margin-bottom: 1em;
+}
+
+
+.flashmessages .alert-info {
+    background-color: var(--flash-subtle-gray-2);
+}
+
+.flashmessages .alert-error {
+    background-color: var(--flash-error-2);
+}
+
+.flashmessages .alert-success {
+    background-color: var(--flash-success-2);
+}
+
+flashmessages .alert-success {
+    background-color: var(--flash-warning-2);
+    border: 2 px solid var(--flash-warning-1);
+}
+
+.flashmessages button {
+    height: 2.5rem;
+    font-size: 80%;
+    background-color: var(--flash-dark);
+    border: 2px double;
+    border-radius: 60px;
+    cursor: pointer;
+
+    display: inline-block;
+    position: absolute;
+    right: 0px;
+}
