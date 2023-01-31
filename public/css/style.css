@@ -3,6 +3,7 @@
     --bg-color: rgba(123,123,123,0.5);
     --red: #b00;
     --blue: #00b;
+    --darkgrey: #888888;
     --fullwidth: 100%;
 }
 
@@ -96,6 +97,8 @@ body {
     counter-reset: count 0;
     border-collapse: separate;
     border-spacing: 1em;
+    background-color: var(--darkgrey);
+    opacity: 0.9;
 }
 
 .tbl_dienstplan .day {
