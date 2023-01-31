@@ -1,46 +1,36 @@
 <?php
 namespace Dienstplan\Worker;
-/**
- * Created by PhpStorm.
- * User: galak
- * Date: 02.05.17
- * Time: 21:25
- */
-ini_set('display_errors', 1);
-error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
 class Wishes{
-    public $monthyear;
+    private $config = array();
+    private $month_string = null;
+    private $month_name = null;
+    private $month_int = null;
+    private $year_int = null;
 
-    function __construct($monthyear = false)
+    function __construct(\DateTimeImmutable $target_month)
     {
-        global $config;
-        // load people
-        require_once('./config/general.php');
-        require_once('./config/people.php');
+        // merge all config file for month in on big arrray
+        $this->month_string = $target_month->format('Y_m');
+        $this->month_name = $target_month->format('F');
+        $this->month_int = $target_month->format('m');
+        $this->year_int = $target_month->format('Y');
+        $base_path = __DIR__.'/../../data/';
 
-        $now = getdate();
-        $this->debug = array();
-        $this->target_month = sprintf('%02d', $now['mon'] + 1);
-        $this->target_year = $now['mon'] == 12 ? $now['year'] + 1 : $now['year'];
+        $conffiles = [];
+        $conffiles['people'] = $base_path.$subconf.'people.php';
 
-        // override defaults if value is passed and is of format mm_YYYY
-        if($monthyear) {
-            // do cruel check
-            list($target_month, $target_year) = explode('_', $monthyear);
-            if( is_int($target_month)
-                and (0 < $target_month and $target_month < 13)
-                and is_int($target_year)
-                and ($target_year < $now['year'] + 2)
-                and ($target_year > $now['year'] - 2)) {
-                    $this->target_month = $target_month;
-                    $this->target_year = $target_year;
+        foreach(['wishes', 'urlaub'] as $subconf) {
+            $conffiles[$subconf] = $base_path.$subconf.'_'.$this->month_string.'.php';
+        }
+
+        foreach($conffiles as $conffile) {
+            if (file_exists($conffile)) {
+                $this->config = array_merge($this->config, require_once($conffile));
             }
         }
 
-        // see how many days the target month can have
-        $d = new DateTime( $this->target_year.'-'.$this->target_month);
-        $this->max_days_in_target_month = $d->format('t'); // see date_format
+        $this->days_in_target_month = cal_days_in_month(CAL_GREGORIAN, $target_month->format('m'), $target_month->format('Y'));
     }
 
     function load_wishes() {
@@ -296,8 +286,8 @@ class Wishes{
     }
 }
 
-// load people
-$wuensche = new wishes();
+/**
+ * $wuensche = new wishes();
 session_start();
 if(!isset($_SESSION['username'])) {
     session_destroy();
@@ -400,3 +390,4 @@ $debug = $wuensche->getdebug();
 </body>
 </html>
 
+**/
