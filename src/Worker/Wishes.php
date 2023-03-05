@@ -23,6 +23,7 @@ class Wishes{
         foreach(['wishes', 'urlaub'] as $subconf) {
             $conffiles[$subconf] = $base_path.$subconf.'_'.$this->month_string.'.php';
         }
+        $this->conffiles = $conffiles;
 
         foreach($conffiles as $conffile) {
             if (file_exists($conffile)) {
@@ -34,13 +35,7 @@ class Wishes{
     }
 
     function load_wishes() {
-        $wishes_file = './config/wishes_'.$this->target_month.'_'.$this->target_year.'.php';
-        if (file_exists($wishes_file)) {
-            include_once($wishes_file);
-        } else {
-            $this->debug[] = 'no wishes file for month '.$this->target_month.'_'.$this->target_year.' was found.';
-        }
-
+        return($this->config['wishes']);
     }
 
     function get_duty($person) {
@@ -176,7 +171,8 @@ class Wishes{
 
     function save($wuensche_arr) {
         // remove submit button value
-        unset($wuensche_arr['dpupdate']);
+        unset($wuensche_arr['submit_wishes']);
+        // $this->conffiles
         // remove empty values recursively
         $wuensche_arr = $this->array_remove_empty_recursive($wuensche_arr);
 
