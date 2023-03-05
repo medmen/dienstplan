@@ -43,30 +43,34 @@ final class WishAction
 
             if ($nowminus10y < $next_month and $next_month < $nowplus10y) {
                 $this->month = $next_month;
-                $flash->add('info', 'selected month is within 10 years from now');
+                // $flash->add('info', 'selected month is within 10 years from now');
             } else {
                 throw new \InvalidArgumentException('month given is invalid, older than 10 years or more than 10 years in the future');
             }
         }
-        $flash->add('info', 'selected month is within 10 years from now');
 
         $formatted_monthyear = \IntlDateFormatter::formatObject($this->month, "MMMM y");
-        $last_day_in_month = $this->month->modify("last day of this month");
+        $first_day_in_month = $this->month->modify("first day of this month")->setTime(0,0,0); // make sure to zero time of this day to avoid rounding issues in period used later
+        $last_day_in_month = $this->month->modify("last day of this month")->setTime(0,0,1); // make sure end date is a bit later than start to avoid rounding issues in period
+        $interval = DateInterval::createFromDateString('1 day');
+        $daterange = new \DatePeriod($first_day_in_month, $interval ,$last_day_in_month);
+
+        $calendarmonth = array();
+        foreach($daterange as $day) {
+            $calendarmonth[$day->format('d')] = $day->format('N'); // 'N' = 1 Monday, 7 Sunday
+            //@TODO implement holidays!
+        }
 
         $this->renderer->addAttribute('flash', $flash->all());
         $this->renderer->addAttribute('title', 'Wunsch für ' . $formatted_monthyear);
         $this->renderer->addAttribute('persons', $this->persons);
         $this->renderer->addAttribute('days_in_month', $last_day_in_month->format("d"));
+        $this->renderer->addAttribute('calendarmonth', $calendarmonth);
         $wishes = new Wishes($this->month);
 
         $this->wuensche = $wishes->load_wishes();
-        $this->renderer->addAttribute('wuensche', $this->wuensche);
+        $this->renderer->addAttribute('wishes', $this->wuensche);
 
-        return $this->renderer->render($response, 't_wishes.php', ['name' => 'World']);
-
-        /**
-         * $response->getBody()->write(json_encode(['hello' => 'world']));
-         * return $response->withHeader('Content-Type', 'application/json');
-         */
+        return $this->renderer->render($response, 't_wishes.php', ['target_month' => $this->month->format('U')]);
     }
 }
