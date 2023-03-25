@@ -7,6 +7,7 @@ class Wishes{
     private $month_name = null;
     private $month_int = null;
     private $year_int = null;
+    private $path_to_configfiles = null;
 
     function __construct(\DateTimeImmutable $target_month)
     {
@@ -15,13 +16,13 @@ class Wishes{
         $this->month_name = $target_month->format('F');
         $this->month_int = $target_month->format('m');
         $this->year_int = $target_month->format('Y');
-        $base_path = __DIR__.'/../../data/';
+        $this->path_to_configfiles = __DIR__.'/../../data/';
 
         $conffiles = [];
-        $conffiles['people'] = $base_path.$subconf.'people.php';
+        $conffiles['people'] = $this->path_to_configfiles.'people.php';
 
         foreach(['wishes', 'urlaub'] as $subconf) {
-            $conffiles[$subconf] = $base_path.$subconf.'_'.$this->month_string.'.php';
+            $conffiles[$subconf] = $this->path_to_configfiles.$subconf.'_'.$this->month_string.'.php';
         }
         $this->conffiles = $conffiles;
 
@@ -35,175 +36,49 @@ class Wishes{
     }
 
     function load_wishes() {
-        return($this->config['wishes']);
-    }
-
-    function get_duty($person) {
-        global $config;
-        $ret = ''; // initialize string we will return
-        $counter = 0;
-        $first_of_month = new DateTime($this->target_year.'-'.$this->target_month.'-1');
-        $last_of_month = new DateTime($this->target_year.'-'.$this->target_month.'-'.$this->max_days_in_target_month);
-
-        if (is_array($config['wishes']['duty']) and array_key_exists($person, $config['wishes']['duty'])) {
-            foreach($config['wishes']['duty'][$person] as $wid => $wish_date) {
-                if(empty($wish_date)) {
-                    // arrays are stored with trailing comma, so there will be empty array elements
-                    continue;
-                }
-                $this->debug[] = "for $person wid is $wid and wishdate is ".var_export($wish_date, true);
-                /**
-                 * by convention a wish can be either a range of dates consisting
-                 * of a start date and end date or a single date
-                 **/
-                // very crude check, TODO: make date storage and retrieval much safer
-                $date_limits = explode('~', $wish_date);
-                if(count($date_limits) == 2) {
-                    $start_date = new DateTime(trim($date_limits[0]));
-                    $end_date = new DateTime(trim($date_limits[1]));
-                } else { // assume only a single date entry is given, see @TODO for this
-                    $start_date = $end_date = new DateTime(trim($date_limits[0]));
-                }
-
-                $this->debug[] = "StartDate is ".$start_date->format('d.m.Y')." AND EndDate is ".$end_date->format('d.m.Y');
-                // see if whole period is in target month, chop otherwise
-                $start_in_range = $this->isInDateRange($start_date, $first_of_month, $last_of_month);
-                $end_in_range = $this->isInDateRange($end_date, $first_of_month, $last_of_month);
-                $this->debug[] = "StartDate is in range: $start_in_range AND ";
-                $this->debug[] = "EndDate is in range: $end_in_range <br>";
-
-                $ret.= '<input class="datepicker" type="text" size="15" name="duty_'.$person.'[]" id="duty_'.$person.'_'.$counter.'" placeholder="Dienstwunsch"';
-                if($start_in_range && $end_in_range) {
-                    if($start_date == $end_date) {
-                        $ret.= ' value="'.$start_date->format('d.m.Y').'"';
-                        $ret.= '><script id="sduty_'.$person.'_'.$counter.'"> $(function() { $("#duty_'.$person.'_'.$counter.'").dateRangePicker($.datepicker_settings_single); });</script>'."<br>\n";
-                    } else {
-                        $ret.= ' value="'.$start_date->format('d.m.Y').' ~ '.$end_date->format('d.m.Y').'"';
-                        $ret.= '><script id="sduty_'.$person.'_'.$counter.'"> $(function() { $("#duty_'.$person.'_'.$counter.'").dateRangePicker($.datepicker_settings); });</script>'."<br>\n";
-                    }
-                }
-                elseif ($start_in_range) {
-                    $ret.= ' value="'.$start_date->format('d.m.Y').' ~ '.$last_of_month->format('d.m.Y').'"';
-                    $ret.= '><script id="sduty_'.$person.'_'.$counter.'"> $(function() { $("#duty_'.$person.'_'.$counter.'").dateRangePicker($.datepicker_settings); });</script>'."<br>\n";
-                }
-                elseif ($end_in_range) {
-                    $ret.= ' value="'.$first_of_month->format('d.m.Y').' ~ '.$end_date->format('d.m.Y').'"';
-                    $ret.= '><script id="sduty_'.$person.'_'.$counter.'"> $(function() { $("#duty_'.$person.'_'.$counter.'").dateRangePicker($.datepicker_settings); });</script>'."<br>\n";
-                }
-
-                // Field filled, now raise the counter!
-                $counter++;
+        $wishes = $this->config['wishes'];
+        // add persons to array who have not yet entered wishes
+        foreach ($this->config['people'] as $person => $persondata) {
+            if (!in_array($person, array_keys($wishes))) {
+                $wishes[$person] = [];
             }
-        } else {
-            $this->debug[] = "$person is not in duty";
         }
-        // no matter if duties were found, we have to return at least 1 empty field to fill out
-        $ret.= '<input class="datepicker" type="text" size="15" name="duty_'.$person.'[]" id="duty_'.$person.'_'.$counter.'" placeholder="Dienstwunsch">';
-        $ret.= '<script id="sduty_'.$person.'_'.$counter.'"> $(function() { $("#duty_'.$person.'_'.$counter.'").dateRangePicker($.datepicker_settings); });</script>'."<br>\n";
-        return $ret;
-    }
-
-    function get_noduty($person) {
-        global $config;
-        $ret = ''; // initialize string we will return
-        $counter = 0;
-        $first_of_month = new DateTime($this->target_year.'-'.$this->target_month.'-1');
-        $last_of_month = new DateTime($this->target_year.'-'.$this->target_month.'-'.$this->max_days_in_target_month);
-
-        if (is_array($config['wishes']['noduty']) and array_key_exists($person, $config['wishes']['noduty'])) {
-            foreach($config['wishes']['noduty'][$person] as $wid => $wish_date) {
-                if(empty($wish_date)) {
-                    // arrays are stored with trailing comma, so there will be empty array elements
-                    continue;
-                }
-                $this->debug[] = "for $person wid is $wid and noduty-wishdate is ".var_export($wish_date, true);
-                /**
-                 * by convention a wish can be either a range of dates consisting
-                 * of a start date and end date or a single date
-                 **/
-                // very crude check, TODO: make date storage and retrieval much safer
-                $date_limits = explode('~', $wish_date);
-                if(count($date_limits) == 2) {
-                    $start_date = new DateTime(trim($date_limits[0]));
-                    $end_date = new DateTime(trim($date_limits[1]));
-                } else { // assume only a single date entry is given, see @TODO for this
-                    $start_date = $end_date = new DateTime(trim($date_limits[0]));
-                }
-
-                $this->debug[] = "StartDate is ".$start_date->format('d.m.Y')." AND EndDate is ".$end_date->format('d.m.Y');
-                // see if whole period is in target month, chop otherwise
-                $start_in_range = $this->isInDateRange($start_date, $first_of_month, $last_of_month);
-                $end_in_range = $this->isInDateRange($end_date, $first_of_month, $last_of_month);
-                $this->debug[] = "StartDate is in range: $start_in_range AND ";
-                $this->debug[] = "EndDate is in range: $end_in_range <br>";
-
-                $ret.= '<input class="datepicker" type="text" size="15" name="noduty_'.$person.'[]" id="noduty_'.$person.'_'.$counter.'" placeholder="Dienstfrei-Wunsch"';
-                if($start_in_range && $end_in_range) {
-                    if($start_date == $end_date) {
-                        $ret.= ' value="'.$start_date->format('d.m.Y').'"';
-                        $ret.= '><script id="snoduty_'.$person.'_'.$counter.'"> $(function() { $("#noduty_'.$person.'_'.$counter.'").dateRangePicker($.datepicker_settings_single); });</script>'."<br>\n";
-                    } else {
-                        $ret.= ' value="'.$start_date->format('d.m.Y').' ~ '.$end_date->format('d.m.Y').'"';
-                        $ret.= '><script id="snoduty_'.$person.'_'.$counter.'"> $(function() { $("#noduty_'.$person.'_'.$counter.'").dateRangePicker($.datepicker_settings); });</script>'."<br>\n";
-                    }
-                }
-                elseif ($start_in_range) {
-                    $ret.= ' value="'.$start_date->format('d.m.Y').' ~ '.$last_of_month->format('d.m.Y').'"';
-                    $ret.= '><script id="snoduty_'.$person.'_'.$counter.'"> $(function() { $("#noduty_'.$person.'_'.$counter.'").dateRangePicker($.datepicker_settings); });</script>'."<br>\n";
-                }
-                elseif ($end_in_range) {
-                    $ret.= ' value="'.$first_of_month->format('d.m.Y').' ~ '.$end_date->format('d.m.Y').'"';
-                    $ret.= '><script id="snoduty_'.$person.'_'.$counter.'"> $(function() { $("#noduty_'.$person.'_'.$counter.'").dateRangePicker($.datepicker_settings); });</script>'."<br>\n";
-                }
-
-                // Field filled, now raise the counter!
-                $counter++;
-            }
-        } else {
-            $this->debug[] = "$person is not in noduty";
-        }
-        // no matter if duties were found, we have to return at least 1 empty field to fill out
-        $ret.= '<input class="datepicker" type="text" size="15" name="noduty_'.$person.'[]" id="noduty_'.$person.'_'.$counter.'" placeholder="Dienstfrei-Wunsch">';
-        $ret.= '<script id="snoduty_'.$person.'_'.$counter.'"> $(function() { $("#noduty_'.$person.'_'.$counter.'").dateRangePicker($.datepicker_settings); });</script>'."<br>\n";
-        return $ret;
-        // return '<input  class="datepicker" type="text" size="15" name="noduty_'.$person.'" id="noduty_'.$person.'_0" placeholder="Dienstfrei-Wunsch">'."<br>";
+        return($wishes);
     }
 
     function save($wuensche_arr) {
+        $wuensche = array();
         // remove submit button value
-        unset($wuensche_arr['submit_wishes']);
-        // $this->conffiles
+        unset($wuensche_arr['submit_wishes'], $wuensche_arr['target_month']);
         // remove empty values recursively
         $wuensche_arr = $this->array_remove_empty_recursive($wuensche_arr);
 
-        $allowed_dutytypes = array('duty', 'noduty');
+        $allowed_dutytypes = array('D', 'F');
 
-        foreach($wuensche_arr as $name => $value) {
-            list($dutytype, $personname) = explode('_', $name);
-            // cruel check
-            if(!in_array($dutytype, $allowed_dutytypes)) {
-                continue;
-            }
-
-            foreach($value as $vid => $daterange) {
-                ${$dutytype}[$personname][$vid] = $daterange;
+        foreach($wuensche_arr as $personname => $wishes_arr) {
+            foreach(array_values($wishes_arr) as $dutyDateType) {
+                list($day, $dutytype) = explode('_', $dutyDateType);
+                if(!in_array($dutytype, $allowed_dutytypes)) {
+                    continue;
+                }
+                $wuensche[$personname][$day] = $dutytype;
             }
         }
 
-        $file_name = 'config/wishes_'.$this->target_month.'_'.$this->target_year.'.php';
-        $file_content = "<?php\nglobal \$config;\n";
-        foreach ($allowed_dutytypes as $dutytype) {
-            if(is_array(${$dutytype})) {
-                $file_content.= '$config[\'wishes\'][\''.$dutytype.'\'] = '.var_export(${$dutytype}, true).";\n";
-            }
+        $file_name = $this->path_to_configfiles.'wishes_'.$this->year_int.'_'.$this->month_int.'.php';
+        $file_content = "<?php\n return array(\n".'"wishes" => '."[\n";
+
+        foreach ($wuensche as $person => $dutytype) {
+            $file_content.= "\t\"".$person.'" => '."\n\t\t".var_export($dutytype, true).',';
         }
+        // we should trim last komma to avoid extra parsing
+        $file_content = rtrim($file_content, ',')."]\n); \n";
 
         $success = file_put_contents($file_name, $file_content, LOCK_EX);
         // $success can not simple be returned because it holds the number of bytes written, no bool
-        if($success) {
-            return true;
+        if(!$success) {
+            throw new \ErrorException('Speichern der Dienstwünsche ist fehlgeschlagen');
         }
-
     }
 
     // HELPER FUNCTIONS
@@ -281,109 +156,3 @@ class Wishes{
         return $people_available;
     }
 }
-
-/**
- * $wuensche = new wishes();
-session_start();
-if(!isset($_SESSION['username'])) {
-    session_destroy();
-    header('Location: login.php');
-}
-
-$monat = new DateTime($wuensche->target_year.'-'.$wuensche->target_month);
-setlocale(LC_TIME, 'de_DE.UTF-8');
-$monat_formatiert = strftime("%B %Y", $monat->getTimestamp());
-
-if($_POST['dpupdate']) {
-    $wuensche->debug[] = var_export($_POST, true);
-    $success = $wuensche->save($_POST);
-    if($success) {
-        $message = "Wünsche wurden erfolgreich gespeichert";
-    }
-}
-
-$wuensche->load_wishes();
-
-$output = '<form id="frm_duty" method= "post" action="Wishes.php"><div class="gridcontainer">';
-$output.= '<div class="box">Name</div>'."\n".'<div class="box">Dienstwunsch</div>'."\n".'<div class="box">Frei-Wunsch</div>'."\n";
-foreach($wuensche->get_people() as $person) {
-    $person = trim($person);
-    $output.= '<div id="person_'.$person.'" class="box">'.$person.'</div>'."\n";
-    $output.= '<div id="duty_'.$person.'" class="box autoinput">'.$wuensche->get_duty($person).'</div>'."\n";
-    $output.= '<div id="noduty_'.$person.'" class="box autoinput">'.$wuensche->get_noduty($person).'</div>'."\n";
-}
-$output.= '</div><input type="submit" name="dpupdate"></form>';
-
-$debug = $wuensche->getdebug();
-?>
-
-<html lang="de">
-<head>
-<?php include 'header.html';?>
-    <link rel="stylesheet" href="../../public/css/daterangepicker.css">
-    <script src="../../index.php"></script>
-    <script src="../../public/js/jquery-3.2.1.min.js"></script>
-    <script src="../../public/js/jq_new-inputfield.js"></script>
-    <script>
-        $.datepicker_settings =
-            {
-                singleMonth: true,
-                showShortcuts: false,
-                showTopbar: false,
-                startOfWeek: 'monday',
-                separator : ' ~ ',
-                format: 'DD.MM.YYYY',
-                startDate: '<?php echo '01.'.$wuensche->target_month.'.'.$wuensche->target_year;?>',
-                endDate: '<?php echo $wuensche->max_days_in_target_month.'.'.$wuensche->target_month.'.'.$wuensche->target_year;?>'
-            };
-
-        $.datepicker_settings_single =
-            {
-                singleMonth: true,
-                showShortcuts: false,
-                showTopbar: false,
-                startOfWeek: 'monday',
-                singleDate : true,
-                format: 'DD.MM.YYYY',
-                startDate: '<?php echo '01.'.$wuensche->target_month.'.'.$wuensche->target_year;?>',
-                endDate: '<?php echo $wuensche->max_days_in_target_month.'.'.$wuensche->target_month.'.'.$wuensche->target_year;?>'
-            };
-
-
-    </script>
-    <script src="../../public/js/jquery.daterangepicker.js"></script>
-</head>
-<body>
-<div class="container">
-    <?php include 'navigation.php';?>
-    <h1>WÜNSCHE für <?php echo $monat_formatiert; ?></h1>
-    <?php if(is_array($debug)): ?>
-    <section class="row">
-        <aside><?php implode("<br>\n", $debug); ?></aside>
-    </section>
-    <?php endif; ?>
-
-    <section class="row">
-        <aside><?php echo $message; ?></aside>
-    </section>
-
-    <section class="row">
-        <article id="main" class="nine columns">
-            <?php   echo $output; ?>
-        </article>
-<!--
-        <div class="two columns">
-            <aside>
-                <pre>here be dragons</pre>
-            </aside>
-            <aside id="debug">
-                <pre>here too</pre>
-            </aside>
-        </div>
--->
-    </section>
-</div>
-</body>
-</html>
-
-**/

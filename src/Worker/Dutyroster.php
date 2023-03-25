@@ -115,26 +115,30 @@ class Dutyroster {
         $people_available = array();
         $candidate = null;
 
-        foreach($this->config['people'] as $i => $ppl) {
-            if(is_array($ppl)) {
-                $people_available[] = $i;
-            }
-
-            if(is_string($ppl)) {
+        foreach($this->config['people'] as $ppl => $ppl_data) {
                 $people_available[] = $ppl;
-            }
         }
 
         shuffle($people_available); // randomize order
 
-        // see if wishes exist for current day
-        $wish_fulfilled = $this->candidate_has_duty_wish($day, $people_available);
-        if($wish_fulfilled and !$this->had_duty_previous_day($wish_fulfilled, $day)) {
-            // TODO: check if we need more tests here to avoid unfair treatment
-            $this->reasons[] = array($day, $wish_fulfilled, 'wish_granted');
-            return $wish_fulfilled;
+        /**
+         * see if wishes exist for current day,
+         * manage fair (random) choice if more than 1 wish exists
+        */
+        $arr_wishes_fulfilled = $this->candidates_have_duty_wish($day, $people_available);
+        shuffle($arr_wishes_fulfilled); //randomize
+        foreach($arr_wishes_fulfilled as $candidate) {
+            if($this->had_duty_previous_day($candidate, $day)) {
+                continue;
+                // candidate is not ALLOWED 2 consecutive duties
+            }
+            return $candidate;
         }
 
+        /**
+         * if we got here no wishes exist for $day
+         * so lets exclude other wishes and see who's left
+         */
         foreach($people_available as $candidate) {
             $this->set_current_candidate($candidate);
 
@@ -177,68 +181,17 @@ class Dutyroster {
         return $candidate;
     }
 
-    function has_noduty_wish($candidate, $day) {
-
-        // for date comparison we need to turn $day into a date object
-        $day = $this->full_date($day);
-        if(!is_array($this->config['wishes']['noduty'][$candidate])) {
-            //no wishes found for $candidate
-            return false;
+    function has_noduty_wish(string $candidate, int $day) :bool {
+        if ($this->config['wishes'][$candidate][$day] == 'F') {
+            return true;
         }
-
-        foreach ($this->config['wishes']['noduty'][$candidate] as $id => $wish) {
-            $wish_limits = explode('~', $wish);
-
-            if(count($wish_limits) == 2) {
-                $start_date = new DateTime(trim($wish_limits[0]));
-                $end_date = new DateTime(trim($wish_limits[1]));
-            } else { // assume only a single date entry is given, see @TODO for this
-                $start_date = $end_date = new DateTime(trim($wish_limits[0]));
-            }
-
-            if($this->isInDateRange($day, $start_date, $end_date)) {
-                $this->debug[] = "for $candidate a noduty wish for ".$start_date->format('Y-m-d')." till ".$end_date->format('Y-m-d')." indludes actual day ".$day->format('Y-m-d');
-                return true;
-            }
-        }
-        // if we made it here all test have yielded no result
         return false;
     }
 
-    function candidate_has_duty_wish($day, $people_available) {
-
-        // for date comparison we need to turn $day into a date object
-        $day = $this->full_date($day);
-
-        if(!is_array($this->config['wishes']['duty'])) {
-           return false;
-        }
-
-        //randomize wishes preserving keys, otherwise alphabetic sorting of names would prefer certain people
-        // see http://php.net/manual/en/function.shuffle.php#121088
-        uksort($this->config['wishes']['duty'], function ($a, $b) {return mt_rand(-10, 10);});
-
-        foreach ($this->config['wishes']['duty'] as $candidate => $wish_arr) {
-            foreach($wish_arr as $wish) {
-                /**
-                 * wish by convention can be either a range of dates consisting
-                 * of a start date and end date or a single date
-                 **/
-                // very crude check, TODO: make date storage and retrieval much safer
-                $wish_limits = explode('~', $wish);
-                if(count($wish_limits) == 2) {
-                    $start_date = new DateTime(trim($wish_limits[0]));
-                    $end_date = new DateTime(trim($wish_limits[1]));
-                } else { // assume only a single date entry is given, see @TODO for this
-                    $start_date = $end_date = new DateTime(trim($wish_limits[0]));
-                }
-
-                if($this->isInDateRange($day, $start_date, $end_date)) {
-                    $this->debug[] = "for $candidate a duty wish for ".$day->format('Y-m-d')." comes true :)";
-                    return $candidate;
-                } else {
-                   $this->debug[] = "for $candidate a duty wish between ".$start_date->format('Y-m-d')." and ".$end_date->format('Y-m-d').' does not cover actual day '.$day->format('Y-m-d');
-                }
+    function candidates_have_duty_wish(int $day, array $people_available) {
+        foreach ($people_available as $candidate) {
+            if ($this->config['wishes'][$candidate][$day] == 'F') {
+                return $candidate;
             }
         }
     }
@@ -577,23 +530,22 @@ class Dutyroster {
     }
 
     function full_date($target_day) {
-
         $fulldate = $this->year_int.'-'.$this->month_int.'-'.$target_day;
         return(new \DateTime(trim($fulldate)));
     }
 
-    public function add_message($message) {
+    function add_message($message) {
         $this->messages[] = $message;
     }
 
-    public function add_message_once($id, $message) {
+    function add_message_once($id, $message) {
         if(!isset($this->$id)) {
             $this->messages[] = $message;
             $this->$id = 'sent_before';
         }
     }
 
-    public function show_messages() {
+   function show_messages() {
         return(implode("<br>\n", $this->messages));
     }
 }

@@ -41,17 +41,22 @@ body {
     background-color: rgba(0,0,0,0.5);
 }
 
-#main table {
+.tbl_wishes {
     width: 90%;
     border: 1px dotted darkgrey;
 }
 
-.fr {
-    font-style: italic;
+.tbl_wishes .fr {
+    color: #333333;
 }
 
-.we {
-    font-weight: bold;
+.tbl_wishes .we {
+    color: #555555;
+    text-decoration-line: underline;
+}
+
+.tbl_wishes .crowded {
+    background-color: darkorange;
 }
 
 
@@ -104,4 +109,24 @@ body {
 .tbl_dienstplan .day {
     counter-increment: count 1;
     content: counter(count, decimal-leading-zero);
+}
+
+.tbl_dienstplan td {
+    padding-left: 0.4em;
+    padding-right: 0.4em;
+}
+
+
+.tbl_dienstplan {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.tbl_dienstplan tbody {
+    display: flex;
+    flex-direction: row;
+}
+.tbl_dienstplan tr {
+    display: flex;
+    flex-direction: column;
 }
