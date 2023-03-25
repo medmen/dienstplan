@@ -25,11 +25,11 @@ return( array(
     'people' => [
         'anton' => ['fullname' => 'Anton Anders', 'pw' => '$2y$10$cv0fitJNDmQdzydZBGcW7eBYqmwqcpSQWMOqt/FiFrTthVqHZqHD6'], // pw chaf666
         'berta' => ['fullname' => 'Berta Besonders', 'pw' => '$2y$10$cv0fitJNDmQdzydZBGcW7eBYqmwqcpSQWMOqt/FiFrTthVqHZqHD6', 'is_admin' => true],
-        'conny',
-        'dick',
-        'egon',
-        'floppy',
-        'guste',
+        'conny' => [],
+        'dick' => [],
+        'egon' => [],
+        'floppy' => [],
+        'guste' => [],
     ]
     )
 );

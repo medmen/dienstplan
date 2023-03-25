@@ -26,6 +26,7 @@ return function (App $app) {
     $app->get('/logout', \Dienstplan\Action\Auth\LogoutAction::class)->setName('logout');
     // --- normal routes ---
     $app->get('/wuensche', \Dienstplan\Action\WishAction::class)->setName('wishes');
+    $app->post('/wuenschespeichern', \Dienstplan\Action\WishSubmitAction::class)->setName('savewishes');
     $app->get('/[{target_month}]', \Dienstplan\Action\HomeAction::class)->setName('home');
 
 /**

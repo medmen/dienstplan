@@ -28,19 +28,19 @@ class WishSubmitAction
         $flash->clear();
 
         $wishes = new Wishes($target_month);
-        $success = $wishes->save($data);
 
-        if($success['status'] == 'error') {
-            $flash->add('error', 'Fehler beim Speichern: '.$success['message']);
-        } else {
+        try {
+            $wishes->save($data);
             $flash->add('success', 'Erfolgreich gespeichert');
+        } catch(Exception $e) {
+            echo $e->getMessage();
+            $flash->add('error', 'Fehler beim Speichern: '.$success['message']);
         }
-
 
         // Get RouteParser from request to generate the urls
         $routeParser = RouteContext::fromRequest($request)->getRouteParser();
 
-        // Redirect back to the login page
+        // Redirect back to the wish page
         $url = $routeParser->urlFor('wishes');
 
         return $response->withStatus(302)->withHeader('Location', $url);
