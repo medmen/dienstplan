@@ -188,12 +188,14 @@ class Dutyroster {
         return false;
     }
 
-    function candidates_have_duty_wish(int $day, array $people_available) {
+    function candidates_have_duty_wish(int $day, array $people_available) :array {
+        $candidates_arr = [];
         foreach ($people_available as $candidate) {
-            if ($this->config['wishes'][$candidate][$day] == 'F') {
-                return $candidate;
+            if ($this->config['wishes'][$candidate][$day] == 'D') {
+                $candidates_arr[] = $candidate;
             }
         }
+        return $candidates_arr;
     }
 
     function is_uneven_distribution($candidate, $day) {
