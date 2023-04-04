@@ -2,7 +2,6 @@
 namespace Dienstplan\Action;
 
 use Odan\Session\SessionInterface;
-use Odan\Session\SessionManagerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Routing\RouteContext;
@@ -10,12 +9,10 @@ use Dienstplan\Worker\Wishes;
 
 class WishSubmitAction
 {
-    private SessionInterface $session;
-    private SessionManagerInterface $sessionManager;
-
-    public function __construct(SessionInterface $session, SessionManagerInterface $sessionManager,){
+    public function __construct(
+        SessionInterface $session
+    ){
         $this->session = $session;
-        $this->sessionManager = $sessionManager;
     }
 
     public function __invoke(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -33,8 +30,7 @@ class WishSubmitAction
             $wishes->save($data);
             $flash->add('success', 'Erfolgreich gespeichert');
         } catch(Exception $e) {
-            echo $e->getMessage();
-            $flash->add('error', 'Fehler beim Speichern: '.$success['message']);
+            $flash->add('error', 'Fehler beim Speichern: '.$e->getMessage();
         }
 
         // Get RouteParser from request to generate the urls

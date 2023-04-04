@@ -12,36 +12,44 @@ class Wishes{
     function __construct(\DateTimeImmutable $target_month)
     {
         // merge all config file for month in on big arrray
+        $this->config = []; // start with pristine array
+        $this->conffiles = [];
+
         $this->month_string = $target_month->format('Y_m');
         $this->month_name = $target_month->format('F');
         $this->month_int = $target_month->format('m');
         $this->year_int = $target_month->format('Y');
         $this->path_to_configfiles = __DIR__.'/../../data/';
 
-        $conffiles = [];
         $conffiles['people'] = $this->path_to_configfiles.'people.php';
 
         foreach(['wishes', 'urlaub'] as $subconf) {
             $conffiles[$subconf] = $this->path_to_configfiles.$subconf.'_'.$this->month_string.'.php';
         }
+
         $this->conffiles = $conffiles;
 
-        foreach($conffiles as $conffile) {
-            if (file_exists($conffile)) {
-                $this->config = array_merge($this->config, require_once($conffile));
-            }
+        // load people
+        if (file_exists($conffiles['people'])) {
+                $this->config = array_replace($this->config, require($conffiles['people']));
         }
 
         $this->days_in_target_month = cal_days_in_month(CAL_GREGORIAN, $target_month->format('m'), $target_month->format('Y'));
     }
 
-    function load_wishes() {
-        $wishes = $this->config['wishes'];
-        // add persons to array who have not yet entered wishes
-        foreach ($this->config['people'] as $person => $persondata) {
-            if (!in_array($person, array_keys($wishes))) {
+    function load_wishes():array {
+        $wishes = array();
+        if (file_exists($this->conffiles['wishes'])) {
+            $wishes = require($this->conffiles['wishes']);
+            foreach ($this->config['people'] as $person => $persondata) {
+                if (!in_array($person, array_keys($wishes))) {
                 $wishes[$person] = [];
+                }
             }
+        } else {
+             foreach (array_keys($this->config['people']) as $person) {
+                 $wishes[$person] = [];
+             }
         }
         return($wishes);
     }
@@ -66,13 +74,13 @@ class Wishes{
         }
 
         $file_name = $this->path_to_configfiles.'wishes_'.$this->year_int.'_'.$this->month_int.'.php';
-        $file_content = "<?php\n return array(\n".'"wishes" => '."[\n";
+        $file_content = "<?php\n return array(\n";
 
         foreach ($wuensche as $person => $dutytype) {
             $file_content.= "\t\"".$person.'" => '."\n\t\t".var_export($dutytype, true).',';
         }
         // we should trim last komma to avoid extra parsing
-        $file_content = rtrim($file_content, ',')."]\n); \n";
+        $file_content = rtrim($file_content, ',')."\n); \n";
 
         $success = file_put_contents($file_name, $file_content, LOCK_EX);
         // $success can not simple be returned because it holds the number of bytes written, no bool

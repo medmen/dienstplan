@@ -10,32 +10,30 @@ use Dienstplan\Worker\Wishes;
 use DateTimeImmutable;
 use DateInterval;
 use Odan\Session\SessionInterface;
-use Odan\Session\SessionManagerInterface;
 
 final class WishAction
 {
     private PhpRenderer $renderer;
-    private SessionManagerInterface $sessionManager;
     private $persons, $month, $dienstplan, $session, $flash;
 
-    public function __construct(Config $config, PhpRenderer $renderer, SessionInterface $session, SessionManagerInterface $sessionManager)
+    public function __construct(
+        Config $config,
+        PhpRenderer $renderer,
+        SessionInterface $session
+    )
     {
         // Read settings
         $this->persons = serialize($config->get("people"));
         $this->renderer = $renderer;
         $this->month = new DateTimeImmutable('now');
         $this->session = $session;
-        $this->sessionManager = $sessionManager;
     }
 
 
     public function __invoke(Request $request, Response $response, array $args): Response
     {
-        $this->sessionManager->destroy();
-        $this->sessionManager->start();
-        $this->sessionManager->regenerateId();
         $flash = $this->session->getFlash();
-        $flash->add('info', 'Invoking Wish Action');
+        // $flash->add('info', 'Invoking Wish Action');
 
         // if no month was given, use actual month
         // $haeh = $args['target_month'];
