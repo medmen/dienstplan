@@ -29,8 +29,8 @@ class WishSubmitAction
         try {
             $wishes->save($data);
             $flash->add('success', 'Erfolgreich gespeichert');
-        } catch(Exception $e) {
-            $flash->add('error', 'Fehler beim Speichern: '.$e->getMessage();
+        } catch(\Exception $e) {
+            $flash->add('error', 'Fehler beim Speichern: '.$e->getMessage());
         }
 
         // Get RouteParser from request to generate the urls
