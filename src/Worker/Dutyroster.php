@@ -1,6 +1,8 @@
 <?php
 namespace Dienstplan\Worker;
 
+use Dienstplan\Worker\Wishes;
+
 class Dutyroster {
     private $messages = array();
     private $config = array();
@@ -26,15 +28,15 @@ class Dutyroster {
         $conffiles['people'] = $base_path.$subconf.'people.php';
         $conffiles['limits'] = $base_path.$subconf.'limits.php';
 
-        foreach(['wishes', 'urlaub'] as $subconf) {
-            $conffiles[$subconf] = $base_path.$subconf.'_'.$this->month_string.'.php';
-        }
-
         foreach($conffiles as $conffile) {
             if (file_exists($conffile)) {
                 $this->config = array_merge($this->config, require_once($conffile));
             }
         }
+
+        //load wishes
+        $wishes = new Wishes($target_month);
+        $this->config['wishes'] = $wishes->load_wishes();
 
         $this->days_in_target_month = cal_days_in_month(CAL_GREGORIAN, $target_month->format('m'), $target_month->format('Y'));
     }
@@ -54,6 +56,7 @@ class Dutyroster {
         // so create it
 
         if($this->generate() === true) {
+            $this->save();
             return $this->dienstplan;
         }
 
@@ -442,7 +445,7 @@ class Dutyroster {
      */
     function save() {
         if(!is_array($this->dienstplan)) {
-            return false;
+            throw new \ErrorException('Cannot save - no dienstplan array available');
         }
 
         $header = array(
@@ -460,18 +463,6 @@ class Dutyroster {
         $file_content.= '$reasons = '.var_export($this->reasons, true).";\n";
         file_put_contents($filename.'.php', $file_content);
 
-        /**
-        include_once("./vendor/PHP_XLSXWriter/xlsxwriter.class.php");
-        $writer = new XLSXWriter();
-        $writer->writeSheetHeader($sheetheader, $header );
-        foreach($this->dutyroster as $dday => $cand) {
-            $day_of_week = $this->full_date($dday)->format('N');
-            $row = array($dday,$day_of_week, $cand);
-            $writer->writeSheetRow($sheetheader, $row );
-        }
-        $writer->writeToFile($filename.'.xlsx');
-
-         **/
         return '#'.floor((memory_get_peak_usage())/1024)."KB"."\n";
     }
 

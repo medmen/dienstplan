@@ -54,7 +54,7 @@ class Wishes{
         return($wishes);
     }
 
-    function save($wuensche_arr) {
+    function save(array $wuensche_arr) :bool {
         $wuensche = array();
         // remove submit button value
         unset($wuensche_arr['submit_wishes'], $wuensche_arr['target_month']);
@@ -87,6 +87,7 @@ class Wishes{
         if(!$success) {
             throw new \ErrorException('Speichern der Dienstwünsche ist fehlgeschlagen');
         }
+        return true;
     }
 
     // HELPER FUNCTIONS
