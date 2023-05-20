@@ -16,7 +16,7 @@ jobs:
         echo Add other actions to build,
         echo test, and deploy your project.
 - name: Setup PHP Action
-  uses: shivammathur/setup-php@1.6.2
+  uses: shivammathur/setup-php@1.11.7
   with:
     # Setup PHP version.
     php-version: # default is 7.4
