@@ -69,6 +69,8 @@ final class WishAction
         $this->renderer->addAttribute('persons', $this->persons);
         $this->renderer->addAttribute('days_in_month', $last_day_in_month->format("d"));
         $this->renderer->addAttribute('calendarmonth', $calendarmonth);
+        $this->renderer->addAttribute('user', $this->session->get('user'));
+
         $wishes = new Wishes($this->month);
 
         $this->wuensche = $wishes->load_wishes();

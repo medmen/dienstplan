@@ -25,8 +25,8 @@ class Dutyroster {
         $base_path = __DIR__.'/../../data/';
 
         $conffiles = [];
-        $conffiles['people'] = $base_path.$subconf.'people.php';
-        $conffiles['limits'] = $base_path.$subconf.'limits.php';
+        $conffiles['people'] = $base_path.'people.php';
+        $conffiles['limits'] = $base_path.'limits.php';
 
         foreach($conffiles as $conffile) {
             if (file_exists($conffile)) {
@@ -518,7 +518,7 @@ class Dutyroster {
         return $result;
     }
 
-    function isInDateRange(DateTime $date, DateTime $startDate, DateTime $endDate) {
+    function isInDateRange(\DateTime $date, \DateTime $startDate, \DateTime $endDate) {
         return($date >= $startDate and $date <= $endDate); // true or false
     }
 
@@ -527,8 +527,8 @@ class Dutyroster {
         return(new \DateTime(trim($fulldate)));
     }
 
-    function add_message($message) {
-        $this->messages[] = $message;
+    function add_message($message, $level='debug') {
+        $this->messages[$level][] = $message;
     }
 
     function add_message_once($id, $message) {

@@ -2,7 +2,7 @@
 
 namespace Dienstplan\Test;
 
-use dienstplan\Worker\Dutyroster;
+use Dienstplan\Worker\Dutyroster;
 use PHPUnit\Framework\TestCase;
 
 class DutyrosterTest extends TestCase {
@@ -13,7 +13,7 @@ class DutyrosterTest extends TestCase {
         $dutyroster = new Dutyroster($now);
         // override $config
 
-        self:assertStringContainsString(
+        $this->assertStringContainsString(
             "anton",
             $dutyroster->find_candidate($day)
         );

@@ -2,7 +2,7 @@
 namespace Dienstplan\Worker;
 
 class Wishes{
-    private $config = array();
+    private array $config = array();
     private $month_string = null;
     private $month_name = null;
     private $month_int = null;
@@ -64,7 +64,7 @@ class Wishes{
         $allowed_dutytypes = array('D', 'F');
 
         foreach($wuensche_arr as $personname => $wishes_arr) {
-            foreach(array_values($wishes_arr) as $dutyDateType) {
+            foreach($wishes_arr as $dutyDateType) {
                 list($day, $dutytype) = explode('_', $dutyDateType);
                 if(!in_array($dutytype, $allowed_dutytypes)) {
                     continue;

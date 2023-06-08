@@ -32,7 +32,6 @@ final class HomeAction
         $flash->add('info', 'Invoking Home Action');
 
         // if no month was given, use actual month
-        $haeh = $args['target_month'];
         $month_given = $request->getQueryParams()['target_month'];
 
         if(is_null($month_given) === false) {
@@ -56,6 +55,7 @@ final class HomeAction
         $this->renderer->addAttribute('flash', $flash->all());
         $this->renderer->addAttribute('title', 'Dienstplan für '.$formatted_monthyear);
         $this->renderer->addAttribute('persons', $this->persons);
+        $this->renderer->addAttribute('user', $this->session->get('user'));
 
         $dutyroster = new Dutyroster($this->month);
 
