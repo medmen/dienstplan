@@ -21,9 +21,9 @@ final class UserAction
         ServerRequestInterface $request,
         ResponseInterface $response
     ): ResponseInterface {
-        $username = $this->session->get('user');
+        $user = $this->session->get('user');
         $all_flash = json_encode($this->flash->all());
-        $response->getBody()->write(sprintf('Welcome %s', $username).' - '.sprintf('FLASH: %s', $all_flash) );
+        $response->getBody()->write(sprintf('Welcome %s', $user).' - '.sprintf('FLASH: %s', $all_flash) );
 
         return $response;
     }

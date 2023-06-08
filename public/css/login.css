@@ -1,0 +1,63 @@
+
+/*
+taken from
+https://www.webucator.com/article/how-to-create-a-form-without-tables-using-css/
+*/
+
+fieldset {
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--darkgrey);
+    background-color: rgba(0,0,0,0.1);
+}
+
+legend {
+    padding-left: 10px;
+    font-size: 1.2em;
+    font-weight: bold;
+    letter-spacing: .5em;
+    font-family: Arial, Helvetica, sans-serif;
+    font-variant: small-caps;
+}
+
+form ol {
+    padding: 20px;
+}
+
+form li {
+    list-style-type: none;
+    border-bottom: 1px dotted var(--darkgrey);
+    padding-bottom: 2px;
+    margin-bottom: 2px;
+}
+
+label {
+    width: 200px;
+    float: left;
+    font-weight: bold;
+}
+
+span.label {
+    font-weight: bold;
+}
+
+
+select, input[type="text"], input[type="password"] {
+    width: 200px;
+}
+
+textarea {
+    width: 400px;
+    height: 50px;
+}
+
+#buttons {
+    text-align: center;
+}
+
+#buttons input {
+    height: 50px;
+    width: 150px;
+    font-size: 1.5em;
+    font-variant: small-caps;
+    margin: 10px;
+}

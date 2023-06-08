@@ -24,7 +24,7 @@ final class LogoutAction
         $this->sessionManager->destroy();
 
         $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-        $url = $routeParser->urlFor('logout');
+        $url = $routeParser->urlFor('login');
 
         return $response->withStatus(302)->withHeader('Location', $url);
     }
