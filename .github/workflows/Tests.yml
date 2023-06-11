@@ -43,15 +43,15 @@ jobs:
       - name: Setup problem matchers for PHPUnit
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
         
-      - name: php-cs-fixer
-        uses: ale94lko/php-cs-fixer-action@v1.0.1
-        
-#      - name: Coding standards
-#        run: phpcs -q --report=checkstyle src | cs2pr
-        
       - name: Run PHPStan
         run: phpstan analyse src
 
       - name: Run PhpUnit
         run: phpunit --coverage-clover clover.xml --coverage-text
-      
+
+#      - name: php-cs-fixer
+#        uses: ale94lko/php-cs-fixer-action@v1.0.1
+        
+      - name: Coding standards
+        run: phpcs --standard=PSR12 -q --report=checkstyle src | cs2pr
+        
