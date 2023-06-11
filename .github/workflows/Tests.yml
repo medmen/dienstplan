@@ -30,10 +30,10 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: mbstring, intl, calendar, xdebug
+          extensions: mbstring, intl, calendar
           coverage: xdebug
           tools: phpstan, cs2pr, phpcs, php-cs-fixer, phpunit
-
+          
       - name: Install dependencies with Composer
         uses: ramsey/composer-install@v2
         
@@ -50,4 +50,5 @@ jobs:
         run: phpstan analyse src
 
       - name: Run PhpUnit
-        run: phpunit --coverage-clover clover.xml
+        run: phpunit --coverage-clover clover.xml --coverage-text
+      
