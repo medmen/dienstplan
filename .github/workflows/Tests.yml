@@ -36,15 +36,17 @@ jobs:
       - name: Install dependencies with Composer
         uses: ramsey/composer-install@v2
 
-      - name: Coding standards
+      - name: Code Standards
         if: matrix.analysis
-        run: vendor/bin/phpcs
+        uses: rtCamp/action-phpcs-code-review@v3
+        env:
+          GH_BOT_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
+          SKIP_FOLDERS: ".github,.idea,test"
+          PHPCS_SNIFFS_EXCLUDE: "WordPress.Files.FileName"
+        with:
+          args: "PSR12"
 
-      - name: Static analysis
-        if: matrix.analysis
-        run: vendor/bin/phpstan
-
-      - name: Tests
+      - name: Unit Tests
         run: vendor/bin/phpunit
         env:
           XDEBUG_MODE: cover
