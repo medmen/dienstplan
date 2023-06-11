@@ -47,12 +47,10 @@ jobs:
           args: "PSR12"
 
       - name: Unit Tests
-        run: vendor/bin/phpunit
+        uses: php-actions/phpunit@master
         env:
-          XDEBUG_MODE: cover
+          TEST_NAME: TestName
         with:
-          php_version: ${{ matrix.php }}
-          php_extensions: xdebug
-          coverage_text: _coverage/coverage.txt
-          coverage_clover: _coverage/clover.xml
-        
+          bootstrap: vendor/autoload.php
+          configuration: test/phpunit.xml
+          args: --coverage-text
