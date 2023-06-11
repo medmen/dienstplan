@@ -39,17 +39,10 @@ jobs:
       - name: Coding standards
         if: matrix.analysis
         run: vendor/bin/phpcs
-        with:
-          php_version: ${{ matrix.php }}
-          path: src/
-          standard: phpcs.xml
 
       - name: Static analysis
         if: matrix.analysis
         run: vendor/bin/phpstan
-        with:
-          php_version: ${{ matrix.php }}
-          path: src/
 
       - name: Tests
         run: vendor/bin/phpunit
