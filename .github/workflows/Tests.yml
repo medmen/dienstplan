@@ -32,25 +32,22 @@ jobs:
           php-version: ${{ matrix.php }}
           extensions: mbstring, intl, calendar, xdebug
           coverage: xdebug
+          tools: phpstan, cs2pr, phpcs, php-cs-fixer, phpunit
 
       - name: Install dependencies with Composer
         uses: ramsey/composer-install@v2
+        
+      - name: Setup problem matchers for PHP
+        run: echo "::add-matcher::${{ runner.tool_cache }}/php.json"
+        
+      - name: Setup problem matchers for PHPUnit
+        run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
-      - name: Code Standards
-        if: matrix.analysis
-        uses: rtCamp/action-phpcs-code-review@v3
-        env:
-          GH_BOT_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
-          SKIP_FOLDERS: ".github,.idea,test"
-          PHPCS_SNIFFS_EXCLUDE: "WordPress.Files.FileName"
-        with:
-          args: "PSR12"
+      - name: Coding standards
+        run: phpcs -q --report=checkstyle src | cs2pr
+        
+      - name: Run PHPStan
+        run: phpstan analyse src
 
-      - name: Unit Tests
-        uses: php-actions/phpunit@master
-        env:
-          TEST_NAME: TestName
-        with:
-          bootstrap: vendor/autoload.php
-          configuration: test/phpunit.xml
-          args: --coverage-text
+      - name: Run PhpUnit
+        run: phpunit --coverage-clover clover.xml
