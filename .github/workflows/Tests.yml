@@ -42,9 +42,12 @@ jobs:
         
       - name: Setup problem matchers for PHPUnit
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
-
-      - name: Coding standards
-        run: phpcs -q --report=checkstyle src | cs2pr
+        
+      - name: php-cs-fixer
+        uses: ale94lko/php-cs-fixer-action@v1.0.1
+        
+#      - name: Coding standards
+#        run: phpcs -q --report=checkstyle src | cs2pr
         
       - name: Run PHPStan
         run: phpstan analyse src
