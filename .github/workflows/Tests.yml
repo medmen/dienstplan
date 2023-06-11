@@ -30,7 +30,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: mbstring, intl, calendar
+          extensions: mbstring, intl, calendar, xdebug
           coverage: xdebug
 
       - name: Install dependencies with Composer
@@ -39,18 +39,25 @@ jobs:
       - name: Coding standards
         if: matrix.analysis
         run: vendor/bin/phpcs
+        with:
+          php_version: ${{ matrix.php }}
+          path: src/
+          standard: phpcs.xml
 
       - name: Static analysis
         if: matrix.analysis
         run: vendor/bin/phpstan
+        with:
+          php_version: ${{ matrix.php }}
+          path: src/
 
       - name: Tests
-        run: vendor/bin/phpunit --coverage-clover clover.xml
-
-      - name: Upload coverage results to Coveralls
-        if: matrix.analysis
+        run: vendor/bin/phpunit
         env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          composer require php-coveralls/php-coveralls -n -W
-          vendor/bin/php-coveralls --coverage_clover=clover.xml -v
+          XDEBUG_MODE: cover
+        with:
+          php_version: ${{ matrix.php }}
+          php_extensions: xdebug
+          coverage_text: _coverage/coverage.txt
+          coverage_clover: _coverage/clover.xml
+        
