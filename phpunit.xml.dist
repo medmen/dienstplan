@@ -4,21 +4,16 @@
          beStrictAboutChangesToGlobalState="true"
          beStrictAboutOutputDuringTests="true"
          colors="true"
-         bootstrap="test/bootstrap.php"
          executionOrder="random"
 >
-    <testsuites>
-        <testsuite name="Dienstplan Test Suite">
-            <directory>tests</directory>
-        </testsuite>
-    </testsuites>
-
     <coverage processUncoveredFiles="true">
         <include>
-            <directory>src</directory>
+            <directory suffix=".php">../src</directory>
         </include>
         <report>
-            <html outputDirectory="coverage" lowUpperBound="20" highLowerBound="50"/>
+            <html outputDirectory="coverage" lowUpperBound="35" highLowerBound="70"/>
+            <text outputFile="php://stdout" showUncoveredFiles="true"/>
         </report>
     </coverage>
+       
 </phpunit>
