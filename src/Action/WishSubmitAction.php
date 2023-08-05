@@ -21,16 +21,16 @@ class WishSubmitAction
         $target_month = \DateTimeImmutable::createFromFormat('U', $data['target_month']);
 
         // Clear all flash messages
-        $flash = $this->session->getFlash();
-        $flash->clear();
+        $this->flash = $this->session->getFlash();
+        $this->flash->clear();
 
         $wishes = new Wishes($target_month);
 
         try {
             $wishes->save($data);
-            $flash->add('success', 'Erfolgreich gespeichert');
+            $this->flash->add('success', 'Erfolgreich gespeichert');
         } catch(\Exception $e) {
-            $flash->add('error', 'Fehler beim Speichern: '.$e->getMessage());
+            $this->flash->add('error', 'Fehler beim Speichern: '.$e->getMessage());
         }
 
         // Get RouteParser from request to generate the urls

@@ -32,8 +32,8 @@ final class WishAction
 
     public function __invoke(Request $request, Response $response, array $args): Response
     {
-        $flash = $this->session->getFlash();
-        // $flash->add('info', 'Invoking Wish Action');
+        $this->flash = $this->session->getFlash();
+        // $this->flash->add('info', 'Invoking Wish Action');
 
         // if no month was given, use actual month
         // $haeh = $args['target_month'];
@@ -46,7 +46,7 @@ final class WishAction
 
             if ($nowminus10y < $next_month and $next_month < $nowplus10y) {
                 $this->month = $next_month;
-                // $flash->add('info', 'selected month is within 10 years from now');
+                // $this->flash->add('info', 'selected month is within 10 years from now');
             } else {
                 throw new \InvalidArgumentException('month given is invalid, older than 10 years or more than 10 years in the future');
             }
@@ -64,7 +64,7 @@ final class WishAction
             //@TODO implement holidays!
         }
 
-        $this->renderer->addAttribute('flash', $flash->all());
+        $this->renderer->addAttribute('flash', $this->flash->all());
         $this->renderer->addAttribute('title', 'Wunsch für ' . $formatted_monthyear);
         $this->renderer->addAttribute('persons', $this->persons);
         $this->renderer->addAttribute('days_in_month', $last_day_in_month->format("d"));

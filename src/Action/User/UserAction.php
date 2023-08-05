@@ -2,14 +2,16 @@
 
 namespace Dienstplan\Action\User;
 
+use Odan\Session\FlashInterface;
 use Odan\Session\SessionInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use function DI\string;
 
 final class UserAction
 {
     private SessionInterface $session;
-    private $flash;
+    private FlashInterface $flash;
 
     public function __construct(SessionInterface $session)
     {
@@ -23,7 +25,7 @@ final class UserAction
     ): ResponseInterface {
         $user = $this->session->get('user');
         $all_flash = json_encode($this->flash->all());
-        $response->getBody()->write(sprintf('Welcome %s', $user).' - '.sprintf('FLASH: %s', $all_flash) );
+        $response->getBody()->write(sprintf('Welcome %s', (string)$user).' - '.sprintf('FLASH: %s', (string)$all_flash) );
 
         return $response;
     }
