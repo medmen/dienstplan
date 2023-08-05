@@ -1,17 +1,55 @@
 <?php
+declare(strict_types=1);
 
 namespace Dienstplan\Worker;
 
 class Rules
 {
-    function has_noduty_wish($candidate, $day) {
-        global $config;
-        $wishes_file = './config/wishes_'.$this->target_month.'_'.$this->target_year.'.php';
+    /**
+     * config can hold complex arrays, but key is always a name
+     * @var array<string, array<string,mixed>>
+     */
+    private array $config;
+    /**
+     * conffiles holds array(name => path_to_file)
+     * @var array<string, string>
+     */
+    private array $conffiles;
+    private string $month_string;
+    private string $month_int;
+    private string $year_int;
+    private string $path_to_configfiles;
+    private array $messages = array();
+    function __construct(\DateTimeImmutable $target_month)
+    {
+        // merge all config file for month in on big arrray
+        $this->config = []; // start with pristine array
+        $this->month_string = $target_month->format('Y_m');
+        $this->month_int = $target_month->format('m');
+        $this->year_int = $target_month->format('Y');
+        $this->path_to_configfiles = __DIR__.'/../../data/';
+
+        $conffiles['people'] = $this->path_to_configfiles.'people.php';
+
+        foreach(['wishes', 'urlaub'] as $subconf) {
+            $conffiles[$subconf] = $this->path_to_configfiles.$subconf.'_'.$this->month_string.'.php';
+        }
+
+        $this->conffiles = $conffiles;
+
+        // load people
+        if (file_exists($conffiles['people'])) {
+            $this->config = array_replace($this->config, require($conffiles['people']));
+        }
+    }
+
+    function has_noduty_wish(string $candidate, int $day):bool {
+        $wishes_file = './config/wishes_'.$this->month_int.'_'.$this->year_int.'.php';
         if (file_exists($wishes_file)) {
             include_once($wishes_file);
         } else {
             // do not repeat this message over and over again
-            $this->add_message_once('noduty_file_missing','für den Monat '.$this->target_month.'/'.$this->target_year.' existieren noch keine Wünsche in '.__FUNCTION__.'!');
+            $this->add_message('noduty_file_missing','für den Monat '.$this->month_int.'/'.$this->year_int.' existieren noch keine Wünsche in '.__FUNCTION__.'!');
             return false;
         }
 
@@ -26,14 +64,14 @@ class Rules
             $wish_limits = explode('~', $wish);
 
             if(count($wish_limits) == 2) {
-                $start_date = new DateTime(trim($wish_limits[0]));
-                $end_date = new DateTime(trim($wish_limits[1]));
+                $start_date = new \DateTime(trim($wish_limits[0]));
+                $end_date = new \DateTime(trim($wish_limits[1]));
             } else { // assume only a single date entry is given, see @TODO for this
-                $start_date = $end_date = new DateTime(trim($wish_limits[0]));
+                $start_date = $end_date = new \DateTime(trim($wish_limits[0]));
             }
 
             if($this->isInDateRange($day, $start_date, $end_date)) {
-                $this->debug[] = "for $candidate a noduty wish for ".$start_date->format('Y-m-d')." till ".$end_date->format('Y-m-d')." indludes actual day ".$day->format('Y-m-d');
+                $this->add_message("for $candidate a noduty wish for ".$start_date->format('Y-m-d')." till ".$end_date->format('Y-m-d')." indludes actual day ".$day->format('Y-m-d'));
                 return true;
             }
         }
@@ -43,11 +81,11 @@ class Rules
 
     function candidate_has_duty_wish($day, $people_available) {
         global $config;
-        $wishes_file = './config/wishes_'.$this->target_month.'_'.$this->target_year.'.php';
+        $wishes_file = './config/wishes_'.$this->month_int.'_'.$this->year_int.'.php';
         if (file_exists($wishes_file)) {
             include_once($wishes_file);
         } else {
-            $this->add_message_once('duty_file_missing','für den Monat '.$this->target_month.'/'.$this->target_year.' existieren noch keine Wünsche in '.__FUNCTION__.'!');
+            $this->add_message('duty_file_missing','für den Monat '.$this->month_int.'/'.$this->year_int.' existieren noch keine Wünsche in '.__FUNCTION__.'!');
             return false;
         }
 
@@ -71,10 +109,10 @@ class Rules
                 // very crude check, TODO: make date storage and retrieval much safer
                 $wish_limits = explode('~', $wish);
                 if(count($wish_limits) == 2) {
-                    $start_date = new DateTime(trim($wish_limits[0]));
-                    $end_date = new DateTime(trim($wish_limits[1]));
+                    $start_date = new \DateTime(trim($wish_limits[0]));
+                    $end_date = new \DateTime(trim($wish_limits[1]));
                 } else { // assume only a single date entry is given, see @TODO for this
-                    $start_date = $end_date = new DateTime(trim($wish_limits[0]));
+                    $start_date = $end_date = new \DateTime(trim($wish_limits[0]));
                 }
 
                 if($this->isInDateRange($day, $start_date, $end_date)) {
@@ -183,4 +221,15 @@ class Rules
         return false;
     }
 
+    function add_message($message, $level='debug') {
+        $this->messages[$level][] = $message;
+    }
+    function full_date($target_day) {
+        $fulldate = $this->year_int.'-'.$this->month_int.'-'.$target_day;
+        return(new \DateTime(trim($fulldate)));
+    }
+
+    function isInDateRange(\DateTime $date, \DateTime $startDate, \DateTime $endDate) {
+        return($date >= $startDate and $date <= $endDate); // true or false
+    }
 }

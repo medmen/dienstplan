@@ -1,22 +1,28 @@
 <?php
+declare(strict_types=1);
+
 namespace Dienstplan\Worker;
 
 class Wishes{
-    private array $config = array();
-    private $month_string = null;
-    private $month_name = null;
-    private $month_int = null;
-    private $year_int = null;
-    private $path_to_configfiles = null;
-
+    /**
+     * config can hold complex arrays, but key is always a name
+     * @var array<string, array<string,mixed>>
+     */
+    private array $config;
+    /**
+     * conffiles holds array(name => path_to_file)
+     * @var array<string, string>
+     */
+    private array $conffiles;
+    private string $month_string;
+    private string $month_int;
+    private string $year_int;
+    private string $path_to_configfiles;
     function __construct(\DateTimeImmutable $target_month)
     {
         // merge all config file for month in on big arrray
         $this->config = []; // start with pristine array
-        $this->conffiles = [];
-
         $this->month_string = $target_month->format('Y_m');
-        $this->month_name = $target_month->format('F');
         $this->month_int = $target_month->format('m');
         $this->year_int = $target_month->format('Y');
         $this->path_to_configfiles = __DIR__.'/../../data/';
@@ -33,13 +39,14 @@ class Wishes{
         if (file_exists($conffiles['people'])) {
                 $this->config = array_replace($this->config, require($conffiles['people']));
         }
-
-        $this->days_in_target_month = cal_days_in_month(CAL_GREGORIAN, $target_month->format('m'), $target_month->format('Y'));
     }
 
+    /**
+    * @return array<string,array<int,string>> returns array like person_name=>array(integer day-in-month, wish-as-letter)
+    */
     function load_wishes():array {
         $wishes = array();
-        if (file_exists($this->conffiles['wishes'])) {
+        if (array_key_exists('wishes',$this->conffiles) and file_exists($this->conffiles['wishes'])) {
             $wishes = require($this->conffiles['wishes']);
             foreach ($this->config['people'] as $person => $persondata) {
                 if (!in_array($person, array_keys($wishes))) {
@@ -54,6 +61,12 @@ class Wishes{
         return($wishes);
     }
 
+    /**
+     * wünsche_arr holds post data in shope of array(person=>day=wish)
+     * @param array<string,array<int, string>> $wuensche_arr
+     * @return bool
+     * @throws \ErrorException
+     */
     function save(array $wuensche_arr) :bool {
         $wuensche = array();
         // remove submit button value
@@ -90,17 +103,8 @@ class Wishes{
         return true;
     }
 
-    // HELPER FUNCTIONS
-    function getdebug() {
-        global $config;
-        if(true == $config['general']['debug']) {
-            return $this->array_flatten($this->debug);
-        } else {
-            return false;
-        }
-    }
-
-    function array_flatten($array = null) {
+/**
+    function array_flatten($array = null):array {
         $result = array();
 
         if (!is_array($array)) {
@@ -117,12 +121,19 @@ class Wishes{
 
         return $result;
     }
+*/
 
+/**
     function isInDateRange(DateTime $date, DateTime $startDate, DateTime $endDate) {
         return($date >= $startDate && $date <= $endDate);
     }
+*/
 
-    function array_remove_empty_recursive($haystack)
+    /**
+     * @param array<array<int|string>|int|string> $haystack
+     * @return array
+     */
+    function array_remove_empty_recursive(array $haystack):array
     {
         foreach ($haystack as $key => $value) {
             if (is_array($value)) {
@@ -135,6 +146,7 @@ class Wishes{
         return $haystack;
     }
 
+    /**
     function get_people()
     {
         global $config;
@@ -164,4 +176,5 @@ class Wishes{
 
         return $people_available;
     }
+     */
 }

@@ -4,18 +4,18 @@ namespace Dienstplan\Worker;
 use Dienstplan\Worker\Wishes;
 
 class Dutyroster {
-    private $messages = array();
-    private $config = array();
-    private $dienstplan = array();
-    private $statistics = array();
-    private $reasons = array();
-    private $current_candidate = null;
-    private $month_string = null;
-    private $month_name = null;
-    private $month_int = null;
-    private $year_int = null;
+    private array $messages = array();
+    private array $config = array();
+    private array $dienstplan = array();
+    private array $statistics = array();
+    private array $reasons = array();
+    private mixed $current_candidate = null;
+    private ?string $month_string = null;
+    private ?string $month_name = null;
+    private ?int $month_int = null;
+    private ?int $year_int = null;
 
-    function __construct(\DateTimeImmutable $target_month)
+    function __construct(\DateTime $target_month)
     {
         // merge all config file for month in on big arrray
         $this->month_string = $target_month->format('Y_m');
@@ -65,8 +65,6 @@ class Dutyroster {
 
 
     function set_current_candidate($candidate) {
-        global $config;
-
         if(in_array($candidate, $this->config['people'])) {
             $this->current_candidate = $candidate;
             return true;
@@ -516,10 +514,6 @@ class Dutyroster {
             }
         }
         return $result;
-    }
-
-    function isInDateRange(\DateTime $date, \DateTime $startDate, \DateTime $endDate) {
-        return($date >= $startDate and $date <= $endDate); // true or false
     }
 
     function full_date($target_day) {
