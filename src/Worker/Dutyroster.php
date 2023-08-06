@@ -5,7 +5,9 @@ use Dienstplan\Worker\Wishes;
 
 class Dutyroster {
     private array $messages = array();
-    private array $config = array();
+
+    // make config protected to allow overwrite by Tests
+    protected array $config = array();
     private array $dienstplan = array();
     private array $statistics = array();
     private array $reasons = array();
@@ -17,11 +19,18 @@ class Dutyroster {
 
     function __construct(\DateTime $target_month)
     {
-        // merge all config file for month in on big arrray
-        $this->month_string = $target_month->format('Y_m');
-        $this->month_name = $target_month->format('F');
-        $this->month_int = $target_month->format('m');
-        $this->year_int = $target_month->format('Y');
+        $this->set_month_data_in_config($target_month);
+        $this->set_configdata_without_month();
+        $this->set_configwishes_for_month($target_month);
+    }
+
+    protected function set_configwishes_for_month($target_month):void {
+        //load wishes
+        $wishes = new Wishes($target_month);
+        $this->config['wishes'] = $wishes->load_wishes();
+    }
+
+    protected function set_configdata_without_month():void {
         $base_path = __DIR__.'/../../data/';
 
         $conffiles = [];
@@ -33,16 +42,19 @@ class Dutyroster {
                 $this->config = array_merge($this->config, require_once($conffile));
             }
         }
+    }
 
-        //load wishes
-        $wishes = new Wishes($target_month);
-        $this->config['wishes'] = $wishes->load_wishes();
-
+    protected function set_month_data_in_config(\DateTime $target_month):void {
+        // merge all config file for month in on big arrray
+        $this->month_string = $target_month->format('Y_m');
+        $this->month_name = $target_month->format('F');
+        $this->month_int = $target_month->format('m');
+        $this->year_int = $target_month->format('Y');
         $this->days_in_target_month = cal_days_in_month(CAL_GREGORIAN, $target_month->format('m'), $target_month->format('Y'));
     }
 
     /**
-     * @throws \ErrorException
+     * @throws ErrorException
      */
     function create_or_show_for_month():array {
         // see if duty roster was saved already

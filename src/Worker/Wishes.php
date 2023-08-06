@@ -18,7 +18,7 @@ class Wishes{
     private string $month_int;
     private string $year_int;
     private string $path_to_configfiles;
-    function __construct(\DateTimeImmutable $target_month)
+    function __construct(\DateTime $target_month)
     {
         // merge all config file for month in on big arrray
         $this->config = []; // start with pristine array

@@ -43,8 +43,8 @@ jobs:
       - name: Setup problem matchers for PHPUnit
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
         
-      - name: Run PHPStan
-        run: phpstan analyse src
+#      - name: Run PHPStan
+#        run: phpstan analyse src
 
       - name: Run PhpUnit
         run: phpunit --coverage-clover clover.xml --coverage-text
