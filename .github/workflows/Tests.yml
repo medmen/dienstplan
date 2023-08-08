@@ -8,23 +8,15 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: ${{ matrix.experimental }}
     strategy:
-      fail-fast: false
       matrix:
-        php: [8.1, 8.2]
+        php: [7.4, 8.1, 8.2]
         experimental: [false]
         include:
           - php: 8.1
             analysis: true
-
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Cache Composer dependencies
-        uses: actions/cache@v3
-        with:
-          path: /tmp/composer-cache
-          key: ${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
 
       - name: Set up PHP ${{ matrix.php }}
         uses: shivammathur/setup-php@v2
@@ -33,9 +25,18 @@ jobs:
           extensions: mbstring, intl, calendar
           coverage: xdebug
           tools: phpstan, cs2pr, phpcs, php-cs-fixer, phpunit
-          
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: /tmp/composer-cache
+          key: ${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-
+
       - name: Install dependencies with Composer
-        uses: ramsey/composer-install@v2
+        uses: php-actions/composer@v6
+        with:
+          args: --no-progress --prefer-dist --optimize-autoloader
         
       - name: Setup problem matchers for PHP
         run: echo "::add-matcher::${{ runner.tool_cache }}/php.json"
@@ -46,12 +47,18 @@ jobs:
 #      - name: Run PHPStan
 #        run: phpstan analyse src
 
-      - name: Run PhpUnit
-        run: phpunit --coverage-clover clover.xml --coverage-text
+      - name: PhpUnit Tests
+        uses: php-actions/phpunit@v3
+        with:
+          php_extensions: xdebug
+          bootstrap: vendor/autoload.php
+          configuration: test/phpunit.xml
+          args: --coverage-text
+        env:
+          XDEBUG_MODE: coverage
 
 #      - name: php-cs-fixer
 #        uses: ale94lko/php-cs-fixer-action@v1.0.1
         
       - name: Coding standards
         run: phpcs --standard=PSR12 -q --report=checkstyle src | cs2pr
-        
