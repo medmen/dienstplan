@@ -9,7 +9,7 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
-        php: [7.4, 8.1, 8.2]
+        php: [8.1, 8.2]
         experimental: [false]
         include:
           - php: 8.1
@@ -37,10 +37,6 @@ jobs:
         uses: php-actions/composer@master
         with:
           args: --no-progress --prefer-dist --optimize-autoloader
-      - uses: actions/upload-artifact@v3
-        with:
-          name: debug-output
-          path: output.log
 
       - name: Setup problem matchers for PHP
         run: echo "::add-matcher::${{ runner.tool_cache }}/php.json"
@@ -51,12 +47,15 @@ jobs:
       - name: PhpUnit Tests
         uses: php-actions/phpunit@v3
         with:
-          php_extensions: xdebug
+          php_extensions: xdebug mbstring intl calendar
           bootstrap: vendor/autoload.php
           configuration: test/phpunit.xml
+          memory_limit: "256M"
           args: --coverage-text
-        env:
-          XDEBUG_MODE: coverage
+      - uses: actions/upload-artifact@v3
+        with:
+          name: debug-output
+          path: output.log
 
       - name: Coding standards
         run: phpcs --standard=PSR12 -q --report=checkstyle src | cs2pr
