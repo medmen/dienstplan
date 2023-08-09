@@ -29,14 +29,14 @@ jobs:
         uses: php-actions/composer@master
         with:
           php_version: "8.1"
-          php_extensions: calendar mbstring intl
+          php_extensions: calendar mbstring intl xdebug
           args: --no-progress --prefer-dist --optimize-autoloader
 
       - name: PhpUnit Tests
         uses: php-actions/phpunit@v3
         with:
           php_version: 8.1
-          php_extensions: calendar mbstring intl
+          php_extensions: calendar mbstring intl xdebug
           bootstrap: vendor/autoload.php
           configuration: test/phpunit.xml
           args: --coverage-text
