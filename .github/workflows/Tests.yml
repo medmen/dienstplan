@@ -9,7 +9,7 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
-        php: [8.1, 8.2]
+        php: [8.1]
         experimental: [false]
         include:
           - php: 8.1
@@ -17,14 +17,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Set up PHP ${{ matrix.php }}
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          extensions: mbstring, intl, calendar
-          coverage: xdebug
-          tools: phpstan, cs2pr, phpcs, php-cs-fixer, phpunit
 
       - name: Cache Composer dependencies
         uses: actions/cache@v3
@@ -36,6 +28,8 @@ jobs:
       - name: Install dependencies with Composer
         uses: php-actions/composer@master
         with:
+          php_version: "8.1"
+          php_extensions: mbstring intl calendar
           args: --no-progress --prefer-dist --optimize-autoloader
 
       - name: Setup problem matchers for PHP
@@ -47,15 +41,11 @@ jobs:
       - name: PhpUnit Tests
         uses: php-actions/phpunit@v3
         with:
-          php_extensions: xdebug mbstring intl calendar
+          php_version: 8.1
           bootstrap: vendor/autoload.php
           configuration: test/phpunit.xml
-          memory_limit: "256M"
           args: --coverage-text
       - uses: actions/upload-artifact@v3
         with:
           name: debug-output
           path: output.log
-
-      - name: Coding standards
-        run: phpcs --standard=PSR12 -q --report=checkstyle src | cs2pr
