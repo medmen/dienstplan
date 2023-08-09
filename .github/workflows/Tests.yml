@@ -40,6 +40,9 @@ jobs:
           bootstrap: vendor/autoload.php
           configuration: test/phpunit.xml
           args: --coverage-text
+          env:
+            XDEBUG_MODE: coverage
+            
       - uses: actions/upload-artifact@v3
         with:
           name: debug-output
