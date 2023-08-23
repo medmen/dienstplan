@@ -8,9 +8,9 @@ class Dutyroster
 {
     private array $messages = [];
 
-    // make config protected to allow overwrite by Tests
+    // make config and dienstplan protected to allow overwrite by Tests
     protected array $config = [];
-    private array $dienstplan = [];
+    protected array $dienstplan = [];
     private array $statistics = [];
     private array $reasons = [];
     private array $people_available = [];
@@ -260,8 +260,9 @@ class Dutyroster
 
     function had_duty_previous_day($candidate, $day)
     {
+        $dp = $this->dienstplan;
         // TODO: deal with first day of month: look for last day of previous month somehow
-        if (!is_array($this->dienstplan)){
+        if (!is_array($this->dienstplan)) {
             return false;
         }
 
@@ -275,11 +276,11 @@ class Dutyroster
             return false;
         }
 
-        if (!array_key_exists($day, $this->dienstplan)) {
+        if (!isset($this->dienstplan[$day])) {
             return false;
         }
 
-        if ($candidate == $this->dienstplan[$day]){
+        if ($candidate == $this->dienstplan[$day]) {
             return true;
         }
 
