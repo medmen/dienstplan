@@ -44,7 +44,7 @@ class Dutyroster
 
         foreach ($conffiles as $conffile) {
             if (file_exists($conffile)) {
-                $this->config = array_merge($this->config, require_once($conffile));
+                $this->config = array_merge($this->config, include($conffile));
             }
         }
         // people is array of username => additional data, we deal with usernames for now
