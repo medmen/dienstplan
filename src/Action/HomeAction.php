@@ -15,7 +15,7 @@ final class HomeAction
 {
     private PhpRenderer $renderer;
     private mixed $persons;
-    private \DateTime $month;
+    private \DateTimeImmutable $month;
     private mixed $dienstplan;
     private SessionInterface $session;
     private FlashInterface $flash;
@@ -23,9 +23,9 @@ final class HomeAction
     public function __construct(Config $config, PhpRenderer $renderer, SessionInterface $session)
     {
         // Read settings
-        $this->persons = serialize($config->get("people"));
+        // $this->persons = serialize($config->get("people"));
         $this->renderer = $renderer;
-        $this->month = new \DateTime('now');
+        $this->month = new \DateTimeImmutable('now');
         $this->session = $session;
     }
 
@@ -40,29 +40,30 @@ final class HomeAction
 
         if(!is_null($month_given)) {
             // sanity check: make sure date given is between -10 and + 10 years from now
-            $check_month = \DateTime::createFromFormat('m/Y', $month_given);
+            $check_month = \DateTimeImmutable::createFromFormat('m/Y', $month_given);
 
-            $nowplus10y = $this->month->add(new DateInterval('P10Y'));
-            $nowminus10y = $this->month->sub(new DateInterval('P10Y'));
+            //make sure to override current mont (as set in __construct)
+            $this->month = $check_month;
+            $tenYearInterval = new \DateInterval('P10Y');
+            $nowplus10y = $check_month->add($tenYearInterval);
+            $nowminus10y = $check_month->sub($tenYearInterval);
 
             // instanceof makes sure PHPStan doesnt complain
-            if($nowminus10y < $check_month and $check_month < $nowplus10y and $check_month instanceof \DateTime) {
-                $this->month = $check_month;
+            if($nowminus10y < $check_month and $check_month < $nowplus10y and $check_month instanceof \DateTimeImmutable) {
                 $this->flash->add('info', 'selected month is within 10 years from now');
             } else {
-                throw new \InvalidArgumentException('month given is invalid, older than 10 years or more than 10 years in the future');
+                $this->flash->add('error', 'month given is invalid, older than 10 years or more than 10 years in the future');
             }
         }
-        $this->flash->add('info', 'selected month is within 10 years from now');
 
         $formatted_monthyear = \IntlDateFormatter::formatObject($this->month, "MMMM y");
 
         $this->renderer->addAttribute('flash', $this->flash->all());
         $this->renderer->addAttribute('title', 'Dienstplan für '.$formatted_monthyear);
-        $this->renderer->addAttribute('persons', $this->persons);
+        // $this->renderer->addAttribute('persons', $this->persons);
         $this->renderer->addAttribute('user', $this->session->get('user'));
 
-        $dutyroster = new Dutyroster($this->month);
+        $dutyroster = new Dutyroster($this->session, $this->month);
 
         $this->dienstplan = $dutyroster->create_or_show_for_month();
         $this->renderer->addAttribute('dienstplan', $this->dienstplan);

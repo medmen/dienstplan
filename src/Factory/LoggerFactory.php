@@ -29,8 +29,8 @@ final class LoggerFactory
         $this->level = $settings['level'];
 
         // This can be used for testing to make the Factory testable
-        if (isset($settings['test'])) {
-            $this->testLogger = $settings['test'];
+        if (isset($settings['tests'])) {
+            $this->testLogger = $settings['tests'];
         }
     }
 

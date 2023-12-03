@@ -38,7 +38,7 @@ jobs:
           php_version: 8.1
           php_extensions: calendar mbstring intl xdebug
           bootstrap: vendor/autoload.php
-          configuration: test/phpunit.xml
+          configuration: tests/phpunit.xml
           args: --coverage-text
         env:
           XDEBUG_MODE: coverage
