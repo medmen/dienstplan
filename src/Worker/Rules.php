@@ -75,7 +75,7 @@ class Rules
                 return true;
             }
         }
-        // if we made it here all test have yielded no result
+        // if we made it here all tests have yielded no result
         return false;
     }
 

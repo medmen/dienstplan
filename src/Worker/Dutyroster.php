@@ -1,8 +1,10 @@
 <?php
-
 namespace Dienstplan\Worker;
 
 use Dienstplan\Worker\Wishes;
+use Dienstplan\Worker\People;
+use Odan\Session\SessionInterface;
+use Odan\Session\FlashInterface;
 
 class Dutyroster
 {
@@ -11,7 +13,7 @@ class Dutyroster
     // make config and dienstplan protected to allow overwrite by Tests
     protected array $config = [];
     protected array $dienstplan = [];
-    private array $statistics = [];
+        private array $statistics = [];
     private array $reasons = [];
     private array $people_available = [];
     private mixed $current_candidate = null;
@@ -19,43 +21,47 @@ class Dutyroster
     private ?string $month_name = null;
     private ?int $month_int = null;
     private ?int $year_int = null;
+    private SessionInterface $session;
+    private \DateTimeImmutable $target_month;
+    private Wishes $wishes;
 
-    function __construct(\DateTime $target_month)
+    function __construct(SessionInterface $session, \DateTimeImmutable $target_month)
     {
-        $this->set_month_data_in_config($target_month);
-        $this->set_configdata_without_month();
-        $this->set_configwishes_for_month($target_month);
+        $this->session = $session;
+        $this->flash = $this->session->getFlash();
+        $this->target_month = $target_month;
     }
-
-    protected function set_configwishes_for_month($target_month): void
+    
+    protected function get_wishes_for_month($session, $target_month): void
     {
         //load wishes
-        $wishes = new Wishes($target_month);
-        $this->config['wishes'] = $wishes->load_wishes();
+        $wishes = new Wishes($session, $target_month);
+        return($wishes->load_wishes());
     }
 
-    protected function set_configdata_without_month(): void
+    protected function get_people_for_month($target_month): void
     {
-        $base_path = __DIR__ . '/../../data/';
-
-        $conffiles = [];
-        $conffiles['people'] = $base_path . 'people.php';
-        $conffiles['limits'] = $base_path . 'limits.php';
-
-        foreach ($conffiles as $conffile) {
-            if (file_exists($conffile)) {
-                $this->config = array_merge($this->config, include($conffile));
-            }
-        }
-        // people is array of username => additional data, we deal with usernames for now
-        try {
-            $this->people_available = array_keys($this->config['people']);
-        } catch (Exception $ex) {
-            throw new \ErrorException('ne people around here - maybe hire someone?');
-        }
+        $people = new People($this->session);
+        return ($people->load($target_month));
     }
 
-    protected function set_month_data_in_config(\DateTime $target_month): void
+    protected function get_limits(): array
+    {
+        /**
+        $limits = new Limits();
+        $this->limits = $limits->load();
+         */
+        return( array(
+            'limits' => [
+                'total' => 5,
+                'we' => 2,
+                'fr' => 1,
+                'max_iterations' => 500
+            ]
+        ));
+    }
+
+    protected function set_month_data_in_config(\DateTimeImmutable $target_month): void
     {
         // merge all config file for month in on big arrray
         $this->month_string = $target_month->format('Y_m');
@@ -65,10 +71,7 @@ class Dutyroster
         $this->days_in_target_month = cal_days_in_month(CAL_GREGORIAN, $target_month->format('m'), $target_month->format('Y'));
     }
 
-    /**
-     * @throws ErrorException
-     */
-    function create_or_show_for_month(): array
+    function create_or_show_for_month()
     {
         // see if duty roster was saved already
         // if yes: return it
@@ -85,7 +88,8 @@ class Dutyroster
             return $this->dienstplan;
         }
 
-        throw new \ErrorException('could not find a solution :(');
+        $this->flash->add('error', 'could not find a solution :(');
+        return array();
     }
 
 

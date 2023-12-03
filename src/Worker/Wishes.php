@@ -2,24 +2,31 @@
 declare(strict_types=1);
 
 namespace Dienstplan\Worker;
+use Dienstplan\Worker\People;
+use Odan\Session\SessionInterface;
 
 class Wishes{
     /**
      * config can hold complex arrays, but key is always a name
      * @var array<string, array<string,mixed>>
      */
-    private array $config;
+    public array $config;
     /**
      * conffiles holds array(name => path_to_file)
      * @var array<string, string>
      */
-    private array $conffiles;
+    public array $conffiles;
     private string $month_string;
     private string $month_int;
     private string $year_int;
+    private array $people_available;
     private string $path_to_configfiles;
-    function __construct(\DateTime $target_month)
+    private SessionInterface $session;
+    private array $wishes;
+    function __construct(SessionInterface $session, \DateTimeImmutable $target_month)
     {
+        $this->session = $session;
+        $this->flash = $this->session->getFlash();
         // merge all config file for month in on big arrray
         $this->config = []; // start with pristine array
         $this->month_string = $target_month->format('Y_m');
@@ -27,19 +34,21 @@ class Wishes{
         $this->year_int = $target_month->format('Y');
         $this->path_to_configfiles = __DIR__.'/../../data/';
 
-        $conffiles['people'] = $this->path_to_configfiles.'people.php';
+        $this->get_people_for_month($target_month);
 
         foreach(['wishes', 'urlaub'] as $subconf) {
             $conffiles[$subconf] = $this->path_to_configfiles.$subconf.'_'.$this->month_string.'.php';
         }
 
         $this->conffiles = $conffiles;
-
-        // load people
-        if (file_exists($conffiles['people'])) {
-                $this->config = array_replace($this->config, require($conffiles['people']));
-        }
     }
+
+    protected function get_people_for_month($target_month): void
+    {
+        $people = new People($this->session);
+        $this->people_available = $people->load($target_month);
+    }
+
 
     /**
     * @return array<string,array<int,string>> returns array like person_name=>array(integer day-in-month, wish-as-letter)
@@ -48,14 +57,14 @@ class Wishes{
         $wishes = array();
         if (array_key_exists('wishes',$this->conffiles) and file_exists($this->conffiles['wishes'])) {
             $wishes = require($this->conffiles['wishes']);
-            foreach ($this->config['people'] as $person => $persondata) {
-                if (!in_array($person, array_keys($wishes))) {
-                $wishes[$person] = [];
+            foreach ($this->people_available as $personObject) {
+                if (!in_array($personObject->getId, array_keys($wishes))) {
+                $wishes[$personObject->getId] = [];
                 }
             }
         } else {
-             foreach (array_keys($this->config['people']) as $person) {
-                 $wishes[$person] = [];
+            foreach ($this->people_available as $personObject) {
+                $wishes[$personObject->getId] = [];
              }
         }
         return($wishes);
