@@ -1,4 +1,5 @@
 <?php
+
 namespace Dienstplan\Worker;
 
 use Dienstplan\Worker\Wishes;
@@ -13,7 +14,7 @@ class Dutyroster
     // make config and dienstplan protected to allow overwrite by Tests
     protected array $config = [];
     protected array $dienstplan = [];
-        private array $statistics = [];
+    private array $statistics = [];
     private array $reasons = [];
     private array $people_available = [];
     private mixed $current_candidate = null;
@@ -23,23 +24,22 @@ class Dutyroster
     private ?int $year_int = null;
     private SessionInterface $session;
     private \DateTimeImmutable $target_month;
-    private Wishes $wishes;
+    private array $wishes;
 
-    function __construct(SessionInterface $session, \DateTimeImmutable $target_month)
+    public function __construct(SessionInterface $session)
     {
         $this->session = $session;
         $this->flash = $this->session->getFlash();
-        $this->target_month = $target_month;
     }
-    
-    protected function get_wishes_for_month($session, $target_month): void
+
+    protected function get_wishes_for_month($session, $target_month): array
     {
         //load wishes
         $wishes = new Wishes($session, $target_month);
-        return($wishes->load_wishes());
+        return($wishes->get_wishes_for_month($target_month));
     }
 
-    protected function get_people_for_month($target_month): void
+    protected function get_people_for_month($target_month): array
     {
         $people = new People($this->session);
         return ($people->load($target_month));
@@ -51,17 +51,15 @@ class Dutyroster
         $limits = new Limits();
         $this->limits = $limits->load();
          */
-        return( array(
-            'limits' => [
+        return( [
                 'total' => 5,
                 'we' => 2,
                 'fr' => 1,
                 'max_iterations' => 500
-            ]
-        ));
+        ]);
     }
 
-    protected function set_month_data_in_config(\DateTimeImmutable $target_month): void
+    protected function set_formatted_month_data(\DateTimeImmutable $target_month): void
     {
         // merge all config file for month in on big arrray
         $this->month_string = $target_month->format('Y_m');
@@ -71,31 +69,30 @@ class Dutyroster
         $this->days_in_target_month = cal_days_in_month(CAL_GREGORIAN, $target_month->format('m'), $target_month->format('Y'));
     }
 
-    function create_or_show_for_month()
+    function create_or_show_for_month(\DateTimeImmutable $target_month)
     {
+        $this->target_month = $target_month;
+        $this->set_formatted_month_data($target_month);
         // see if duty roster was saved already
         // if yes: return it
         $name_to_find = __DIR__ . '/../../data/dienstplan_' . $this->month_string . '.php';
         if (file_exists($name_to_find)) {
-            return include($name_to_find);
-        }
-
-        // if we got here, no duty roster has been saved for target month yet,
-        // so create it
-
-        if ($this->generate() === true) {
-            $this->save();
+            //$return_data = include($name_to_find);
+            require($name_to_find); // this defines a variable $dienstplan
+            return $dienstplan;
+        } else {
+            $success = $this->generate($target_month);
+            if($success === true) {
+                $this->save();
+            }
             return $this->dienstplan;
         }
-
-        $this->flash->add('error', 'could not find a solution :(');
-        return array();
     }
 
 
     function set_current_candidate($candidate)
     {
-        if (in_array($candidate, $this->config['people'])) {
+        if (in_array($candidate, $this->people_available)) {
             $this->current_candidate = $candidate;
             return true;
         }
@@ -112,7 +109,7 @@ class Dutyroster
     function find_working_plan()
     {
         for ($day = 1; $day <= $this->days_in_target_month; $day++) {
-            $candidate = $this->find_candidate($day) ?? false;
+            $candidate = $this->find_candidate_for_day($day) ?? false;
             if (is_string($candidate)) {
                 $this->dienstplan[$day] = $candidate;
                 $this->update_statistics($candidate, $day);
@@ -129,21 +126,24 @@ class Dutyroster
     }
 
 
-    function generate()
+    function generate(\DateTimeImmutable $target_month)
     {
-        $max_iteration = $this->config['limits']['max_iterations'] ?? 0;
-        for ($i = 1; $i < $max_iteration; $i++) {
+        $this->limits = $this->get_limits($target_month);
+        $this->people_available = $this->get_people_for_month($target_month);
+        $this->wishes = $this->get_wishes_for_month($this->session, $target_month);
+        $max_iterations = $this->limits['max_iterations'] ?? 1000;
+        for ($i = 1; $i < $max_iterations; $i++) {
             if ($this->find_working_plan()) {
-                $this->add_message("after $i iterations i found a working solution :-)");
+                $this->flash->add("info", "after $i iterations i found a working solution :-)");
                 return true;
             }
         }
         // if we got here, no solution was found
-        $this->add_message("after $i iterations i found NO working solution ;-/ <br> consider adapting the limits<br>");
+        $this->flash->add("error","after $i iterations i found NO working solution ;-/ <br> consider adapting the limits<br>");
         return false;
     }
 
-    function find_candidate($day)
+    function find_candidate_for_day($day)
     {
         $candidate = null;
 
@@ -153,7 +153,7 @@ class Dutyroster
          * see if wishes exist for current day,
          * manage fair (random) choice if more than 1 wish exists
         */
-        $arr_wishes_fulfilled = $this->candidates_have_duty_wish($day, $people_available);
+        $arr_wishes_fulfilled = $this->candidates_have_duty_wish($day, $this->people_available);
         shuffle($arr_wishes_fulfilled); //randomize
         foreach ($arr_wishes_fulfilled as $candidate) {
             if ($this->had_duty_previous_day($candidate, $day)) {
@@ -167,51 +167,49 @@ class Dutyroster
          * if we got here no wishes exist for $day
          * so lets exclude other wishes and see who's left
          */
-        foreach ($people_available as $candidate) {
-            $this->set_current_candidate($candidate);
+        foreach ($this->people_available as $candidate) {
+            $current_candidate = $candidate->getId();
+            $this->set_current_candidate($current_candidate);
 
-            if ($this->has_noduty_wish($candidate, $day)) {
-                $this->reasons[] = [$day, $candidate, 'noduty_wish'];
+            if ($this->has_noduty_wish($current_candidate, $day)) {
+                $this->reasons[] = [$day, $current_candidate, 'noduty_wish'];
                 continue;
             }
 
-            if ($this->had_duty_previous_day($candidate, $day)) {
-                $this->reasons[] = [$day, $candidate, 'duty_prev'];
+            if ($this->had_duty_previous_day($current_candidate, $day)) {
+                $this->reasons[] = [$day, $current_candidate, 'duty_prev'];
                 continue;
             }
 
-            if ($this->is_on_vacation($candidate, $day)) {
-                $this->reasons[] = [$day, $candidate, 'urlaub'];
+            if ($this->is_on_vacation($current_candidate, $day)) {
+                $this->reasons[] = [$day, $current_candidate, 'urlaub'];
                 continue;
             }
-            if ($this->limit_reached_total($candidate, $day)) {
-                // $softlimits[$day][] = array($candidate, $priority=5);
-                $this->reasons[] = [$day, $candidate, 'limit_total'];
-                continue;
-            }
-
-            if ($this->limit_reached_weekend($candidate, $day)) {
-                // $softlimits[$day][] = array($candidate, $priority=5);
-                $this->reasons[] = [$day, $candidate, 'limit_we'];
+            if ($this->limit_reached_total($current_candidate, $day)) {
+                $this->reasons[] = [$day, $current_candidate, 'limit_total'];
                 continue;
             }
 
-            if ($this->is_uneven_distribution($candidate, $day)) {
-                // $softlimits[$day][] = array($candidate, $priority=1);
-                $this->reasons[] = [$day, $candidate, 'uneven'];
+            if ($this->limit_reached_weekend($current_candidate, $day)) {
+                $this->reasons[] = [$day, $current_candidate, 'limit_we'];
+                continue;
+            }
+
+            if ($this->is_uneven_distribution($current_candidate, $day)) {
+                $this->reasons[] = [$day, $current_candidate, 'uneven'];
                 continue;
             }
             // All checks passed, include candidate
 
-            return $candidate;
+            return $current_candidate;
         }
 
-        return $candidate;
+        return null;
     }
 
-    function has_noduty_wish(string $candidate, int $day): bool
+    function has_noduty_wish($candidate, int $day): bool
     {
-        if ($this->config['wishes'][$candidate][$day] == 'F') {
+        if ($this->wishes[$candidate][$day] == 'F') {
             return true;
         }
         return false;
@@ -221,15 +219,19 @@ class Dutyroster
     {
         $candidates_arr = [];
         foreach ($this->people_available as $candidate) {
-            if (!array_key_exists($candidate, $this->config['wishes'])) {
+            if (count($this->wishes) < 1) {
                 continue;
             }
 
-            if (!array_key_exists($day, $this->config['wishes'][$candidate])) {
+            if (!array_key_exists($candidate->getId(), $this->wishes)) {
                 continue;
             }
 
-            if($this->config['wishes'][$candidate][$day] == 'D') {
+            if (!array_key_exists($day, $this->wishes[$candidate])) {
+                continue;
+            }
+
+            if ($this->wishes[$candidate][$day] == 'D') {
                     $candidates_arr[] = $candidate;
             }
         }
@@ -313,8 +315,8 @@ class Dutyroster
             // very crude check, TODO: make date storage and retrieval much safer
             $date_limits = explode('~', $urlaub_range);
             if (count($date_limits) == 2) {
-                $start_date = new DateTime(trim($date_limits[0]));
-                $end_date = new DateTime(trim($date_limits[1]));
+                $start_date = new \DateTimeImmutable(trim($date_limits[0]));
+                $end_date = new \DateTimeImmutable(trim($date_limits[1]));
             } else { // assume only a single date entry is given, see @TODO for this
                 $start_date = $end_date = new DateTime(trim($date_limits[0]));
             }
@@ -332,7 +334,7 @@ class Dutyroster
     {
 
         $candidate_total = intval($this->statistics[$candidate]['total']) ?? 0;
-        $limit_total = intval($this->config['limits']['total']) ?? 0;
+        $limit_total = intval($this->limits['total']) ?? 0;
 
         if ($candidate_total >= $limit_total and $limit_total > 0) {
             return true;
@@ -343,7 +345,7 @@ class Dutyroster
 
     function limit_reached_weekend($candidate, $day)
     {
-        if ($this->statistics[$candidate]['we'] >= $this->config['limits']['we']) {
+        if (is_int($this->statistics[$candidate]['we']) and $this->statistics[$candidate]['we'] >= $this->limits['we']) {
             return true;
         }
         return false;
@@ -351,7 +353,7 @@ class Dutyroster
 
     function limit_reached_friday($candidate, $day)
     {
-        if ($this->statistics[$candidate]['fr'] >= $this->config['limits']['fr']) {
+        if ($this->statistics[$candidate]['fr'] >= $this->limits['fr']) {
             return true;
         }
         return false;
@@ -486,16 +488,12 @@ class Dutyroster
         switch ($content) {
             case 'dutyroster':
                 return $tbl;
-                break; // this break should be unnecessary
             case 'statistics':
                 return $stat_tbl;
-                break;
             case 'debug':
                 return $debug_tbl;
-                break;
             case 'alldebug':
                 return ($tbl . "<hr>" . $stat_tbl . "<hr>" . $debug_tbl);
-                break;
             default:
                 return ($tbl . "<hr>" . $stat_tbl);
         }
@@ -535,7 +533,7 @@ class Dutyroster
         $statistics = null;
         $reasons = null;
 
-        $filename = 'data/dienstplan_' . $this->target_year . '_' . $this->target_month . '.php';
+        $filename = 'data/dienstplan_' . $this->year_int . '_' . $this->month_int . '.php';
         if (!file_exists($filename)) {
             return false;
         }
@@ -553,16 +551,6 @@ class Dutyroster
             $this->reasons = $reasons;
         }
         return true;
-    }
-    // HELPER FUNCTIONS
-    function getdebug()
-    {
-        $is_debug_set = $this->config['general']['debug'] ?? false;
-        if (true == $is_debug_set) {
-            return $this->array_flatten($this->debug);
-        } else {
-            return false;
-        }
     }
 
     function array_flatten($array = null)

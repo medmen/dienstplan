@@ -34,7 +34,7 @@ class People {
         foreach ($all_people as $id => $person) {
             $prs = new Person;
             $personObject = $prs->createFromNamedArray($person, $id);
-            if($personObject === null or $personObject->isInactive) {
+            if($personObject === null or $personObject->isInactive($target_month)) {
                 continue;
             }
             $arrayOfPeople[$personObject->getId()] = $personObject;

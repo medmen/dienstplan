@@ -33,23 +33,17 @@ final class WishAction
     public function __invoke(Request $request, Response $response, array $args): Response
     {
         $this->flash = $this->session->getFlash();
-        // $this->flash->add('info', 'Invoking Wish Action');
+        $this->flash->add('info', 'Invoking Wish Action');
 
         // if no month was given, use actual month
         // $haeh = $args['target_month'];
         $month_given = $request->getQueryParams()['target_month'];
 
-        if (is_null($month_given) === false) {
-            // sanity check: make sure date given is between -10 and + 10 years from now
-            $check_month = DateTimeImmutable::createFromFormat('m/Y', $month_given);
-            $next_month = $check_month->add(new DateInterval('P1M'));
-
-            if ($nowminus10y < $next_month and $next_month < $nowplus10y) {
-                $this->month = $next_month;
-                // $this->flash->add('info', 'selected month is within 10 years from now');
-            } else {
-                throw new \InvalidArgumentException('month given is invalid, older than 10 years or more than 10 years in the future');
-            }
+        // isDateWithinLast10Years is defined in /Support/functions.php
+        if ((is_null($month_given) === false) and isDateWithinLast10Years($month_given)) {
+            $this->month = \DateTimeImmutable::createFromFormat('m/Y', $month_given);
+        } else {
+            $this->flash->add('error', 'selected month is older or younger than 10 years, using actual month instead');
         }
 
         $formatted_monthyear = \IntlDateFormatter::formatObject($this->month, "MMMM y");
@@ -71,9 +65,9 @@ final class WishAction
         $this->renderer->addAttribute('calendarmonth', $calendarmonth);
         $this->renderer->addAttribute('user', $this->session->get('user'));
 
-        $wishes = new Wishes($this->month);
+        $wishes = new Wishes($this->session, $this->month);
 
-        $this->wuensche = $wishes->load_wishes();
+        $this->wuensche = $wishes->get_wishes_for_month($this->month, true); // second parameter fetches people without wishes for mpnth
         $this->renderer->addAttribute('wishes', $this->wuensche);
 
         return $this->renderer->render($response, 't_wishes.php', ['target_month' => $this->month->format('U')]);
