@@ -24,7 +24,7 @@ class WishSubmitAction
         $this->flash = $this->session->getFlash();
         $this->flash->clear();
 
-        $wishes = new Wishes($target_month);
+        $wishes = new Wishes($this->session, $target_month);
 
         try {
             $wishes->save($data);

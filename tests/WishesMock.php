@@ -4,11 +4,12 @@ declare(strict_types=1);
 namespace DienstplanTest;
 
 use Dienstplan\Worker\Dutyroster;
+use Dienstplan\Worker\Wishes;
 
 /**
- * Setup: extend Dutyroster class to add a setter for config data
+ * Setup: extend Wishes class to add a setter for config data
  */
-class DutyrosterMock extends Dutyroster
+class WishesMock extends Wishes
 {
     public function set_config_data(array $data): void
     {

@@ -37,23 +37,11 @@ final class HomeAction
 
         // if no month was given, use actual month
         $month_given = $request->getQueryParams()['target_month'];
-
-        if(!is_null($month_given)) {
-            // sanity check: make sure date given is between -10 and + 10 years from now
-            $check_month = \DateTimeImmutable::createFromFormat('m/Y', $month_given);
-
-            //make sure to override current mont (as set in __construct)
-            $this->month = $check_month;
-            $tenYearInterval = new \DateInterval('P10Y');
-            $nowplus10y = $check_month->add($tenYearInterval);
-            $nowminus10y = $check_month->sub($tenYearInterval);
-
-            // instanceof makes sure PHPStan doesnt complain
-            if($nowminus10y < $check_month and $check_month < $nowplus10y and $check_month instanceof \DateTimeImmutable) {
-                $this->flash->add('info', 'selected month is within 10 years from now');
-            } else {
-                $this->flash->add('error', 'month given is invalid, older than 10 years or more than 10 years in the future');
-            }
+        // isDateWithinLast10Years is defined in /Support/functions.php
+        if ((is_null($month_given) === false) and isDateWithinLast10Years($month_given)) {
+            $this->month = \DateTimeImmutable::createFromFormat('m/Y', $month_given);
+        } else {
+            $this->flash->add('error', 'selected month is older or younger than 10 years, using actual month instead');
         }
 
         $formatted_monthyear = \IntlDateFormatter::formatObject($this->month, "MMMM y");
@@ -63,9 +51,9 @@ final class HomeAction
         // $this->renderer->addAttribute('persons', $this->persons);
         $this->renderer->addAttribute('user', $this->session->get('user'));
 
-        $dutyroster = new Dutyroster($this->session, $this->month);
+        $dutyroster = new Dutyroster($this->session);
 
-        $this->dienstplan = $dutyroster->create_or_show_for_month();
+        $this->dienstplan = $dutyroster->create_or_show_for_month($this->month);
         $this->renderer->addAttribute('dienstplan', $this->dienstplan);
 
         return $this->renderer->render($response, 'home.php', ['name' => 'World']);

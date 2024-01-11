@@ -42,3 +42,22 @@ function beweglicheFeiertage( int $year ):array
 
     return $return;
 }
+
+/**
+ * @param string $monthyear a string in format month/Year, e.g. 10/1985
+ * @return bool
+ */
+function isDateWithinLast10Years($monthyear)
+{
+    // sanity check: make sure date given is between -10 and + 10 years from now
+    $check_month = \DateTimeImmutable::createFromFormat('m/Y', $monthyear);
+    $tenYearInterval = new \DateInterval('P10Y');
+    $nowplus10y = $check_month->add($tenYearInterval);
+    $nowminus10y = $check_month->sub($tenYearInterval);
+
+    // instanceof makes sure PHPStan doesnt complain
+    if($nowminus10y < $check_month and $check_month < $nowplus10y and $check_month instanceof \DateTimeImmutable) {
+        return true;
+    }
+    return false;
+}

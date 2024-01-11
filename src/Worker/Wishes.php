@@ -16,63 +16,86 @@ class Wishes{
      * @var array<string, string>
      */
     public array $conffiles;
+    private \DateTimeImmutable $target_month;
     private string $month_string;
     private string $month_int;
     private string $year_int;
     private array $people_available;
     private string $path_to_configfiles;
     private SessionInterface $session;
-    private array $wishes;
-    function __construct(SessionInterface $session, \DateTimeImmutable $target_month)
+    function __construct(SessionInterface $session)
     {
         $this->session = $session;
         $this->flash = $this->session->getFlash();
         // merge all config file for month in on big arrray
         $this->config = []; // start with pristine array
+        $this->path_to_configfiles = __DIR__.'/../../data/';
+    }
+
+    private function set_target_month(\DateTimeImmutable $target_month) :void
+    {
+        $this->target_month = $target_month;
         $this->month_string = $target_month->format('Y_m');
         $this->month_int = $target_month->format('m');
         $this->year_int = $target_month->format('Y');
-        $this->path_to_configfiles = __DIR__.'/../../data/';
-
-        $this->get_people_for_month($target_month);
-
-        foreach(['wishes', 'urlaub'] as $subconf) {
-            $conffiles[$subconf] = $this->path_to_configfiles.$subconf.'_'.$this->month_string.'.php';
-        }
-
-        $this->conffiles = $conffiles;
     }
 
-    protected function get_people_for_month($target_month): void
+    private function get_people_for_month(): array
     {
         $people = new People($this->session);
-        $this->people_available = $people->load($target_month);
+        return($people->load($this->target_month));
     }
 
-
     /**
-    * @return array<string,array<int,string>> returns array like person_name=>array(integer day-in-month, wish-as-letter)
-    */
-    function load_wishes():array {
+     * @param $target_month \DateTimeImmutable
+     *
+     * @return array
+     * @TODO finalize, then reduce load_wishes to wrapper.
+     */
+    public function get_wishes_for_month(\DateTimeImmutable $target_month, $add_empty_people = false, $allow_unknown_people = false): array
+    {
+        $this->set_target_month($target_month);
+
         $wishes = array();
-        if (array_key_exists('wishes',$this->conffiles) and file_exists($this->conffiles['wishes'])) {
-            $wishes = require($this->conffiles['wishes']);
-            foreach ($this->people_available as $personObject) {
-                if (!in_array($personObject->getId, array_keys($wishes))) {
-                $wishes[$personObject->getId] = [];
+        $people = $this->get_people_for_month();
+
+        $wishes_file = $this->path_to_configfiles.'wishes_'.$this->month_string.'.php';
+        $this->conffiles['wishes'] = $wishes_file;
+
+        $urlaub_file = $this->path_to_configfiles.'urlaub_'.$this->month_string.'.php';
+        $this->conffiles['urlaub'] = $wishes_file;
+
+        if (file_exists($this->conffiles['wishes'])) {
+           $wishes = require($this->conffiles['wishes']);
+           // add people without wishes if requested
+           if ($add_empty_people) {
+               foreach (array_keys($people) as $personId) {
+                   if (!array_key_exists($personId, $wishes)) {
+                       $wishes[$personId] = [];
+                   }
+               }
+           }
+           // delete unknown people unless requested
+           if ($allow_unknown_people == false) {
+               foreach (array_keys($wishes) as $couldBeUnknown) {
+                   if (!array_key_exists($couldBeUnknown, $people)) {
+                        unset($wishes[$couldBeUnknown]);
+                   }
+               }
+           }
+        } else {
+            $this->flash->add('warning', 'Bisher wurden keine Wünsche für diesen Monat gespeichert');
+            if ($add_empty_people) {
+                foreach (array_keys($people) as $personId) {
+                    $wishes[$personId] = [];
                 }
             }
-        } else {
-            foreach ($this->people_available as $personObject) {
-                $wishes[$personObject->getId] = [];
-             }
         }
         return($wishes);
     }
 
     /**
      * wünsche_arr holds post data in shope of array(person=>day=wish)
-     * @param array<string,array<int, string>> $wuensche_arr
      * @return bool
      * @throws \ErrorException
      */
@@ -112,32 +135,6 @@ class Wishes{
         return true;
     }
 
-/**
-    function array_flatten($array = null):array {
-        $result = array();
-
-        if (!is_array($array)) {
-            $array = func_get_args();
-        }
-
-        foreach ($array as $key => $value) {
-            if (is_array($value)) {
-                $result = array_merge($result, $this->array_flatten($value));
-            } else {
-                $result = array_merge($result, array($key => $value));
-            }
-        }
-
-        return $result;
-    }
-*/
-
-/**
-    function isInDateRange(DateTime $date, DateTime $startDate, DateTime $endDate) {
-        return($date >= $startDate && $date <= $endDate);
-    }
-*/
-
     /**
      * @param array<array<int|string>|int|string> $haystack
      * @return array
@@ -154,36 +151,4 @@ class Wishes{
 
         return $haystack;
     }
-
-    /**
-    function get_people()
-    {
-        global $config;
-        if (!is_array($config['people'])) {
-            return array();
-        }
-
-        $people_available = array();
-        $user_logged_in = $_SESSION['username'];
-
-        // only Admins can change wishes for everyone
-        if (isset($config['people'][$user_logged_in]['is_admin']) and
-            true === $config['people'][$user_logged_in]['is_admin']) {
-            foreach ($config['people'] as $i => $ppl) {
-                if (is_array($ppl)) {
-                    $people_available[] = $i;
-                }
-
-                if (is_string($ppl)) {
-                    $people_available[] = $ppl;
-                }
-            }
-        } else {
-            # logged in user can change own wishes
-            $people_available[] = $user_logged_in;
-        }
-
-        return $people_available;
-    }
-     */
 }

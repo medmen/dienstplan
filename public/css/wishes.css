@@ -1,0 +1,43 @@
+/*
+CSS highlight row and col taken from  https://css-tricks.com/simple-css-row-column-highlighting/
+ */
+table {
+    overflow: hidden;
+}
+
+tr:hover {
+    background-color: rgba(68, 214, 44, 50);
+}
+
+td, th {
+    position: relative;
+}
+td:hover::after,
+th:hover::after {
+    content: "";
+    position: absolute;
+    background-color: rgba(224, 231, 34, 50);
+    left: 0;
+    top: -5000px;
+    height: 10000px;
+    width: 100%;
+    z-index: -1;
+}
+
+.tbl_wishes {
+    width: 90%;
+    border: 1px dotted darkgrey;
+}
+
+.tbl_wishes .fr {
+    color: #333333;
+}
+
+.tbl_wishes .we {
+    color: #555555;
+    text-decoration-line: underline;
+}
+
+.tbl_wishes .crowded {
+    background-color: darkorange;
+}

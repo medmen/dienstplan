@@ -41,24 +41,6 @@ body {
     background-color: rgba(0,0,0,0.5);
 }
 
-.tbl_wishes {
-    width: 90%;
-    border: 1px dotted darkgrey;
-}
-
-.tbl_wishes .fr {
-    color: #333333;
-}
-
-.tbl_wishes .we {
-    color: #555555;
-    text-decoration-line: underline;
-}
-
-.tbl_wishes .crowded {
-    background-color: darkorange;
-}
-
 
 #topnavigation {
     padding: 1%;

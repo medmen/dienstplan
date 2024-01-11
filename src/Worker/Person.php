@@ -71,8 +71,11 @@ class Person {
         }
     }
 
-    function getInactive() {
-        return $this->inactive;
+    function getInactive():bool {
+        if (isset($this->inactive)) {
+            return $this->inactive;
+        }
+        return false;
     }
 
     function validateDate($date, $format = 'd.m.Y')
@@ -112,11 +115,11 @@ class Person {
             return $this;
     }
 
-    function isInactive(\DateTime $date = new \DateTime()) {
+    function isInactive(\DateTimeImmutable $date = new \DateTimeImmutable()) {
 
         $inactive_val = $this->getInactive();
-        if(true === $inactive_val) {
-            return true;
+        if(is_bool($inactive_val)) {
+            return $inactive_val;
         }
 
         if(is_array($inactive_val)) {

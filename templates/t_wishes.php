@@ -1,5 +1,5 @@
 <?php $this->setLayout('layout.php'); ?>
-<?php $this->addAttribute('css', ['css/normalize.css', 'css/skeleton.css', 'css/flashmessages.css', 'css/style.css']); ?>
+<?php $this->addAttribute('css', ['css/normalize.css', 'css/skeleton.css', 'css/flashmessages.css', 'css/style.css', 'css/wishes.css']); ?>
 <?php $this->addAttribute('js', ['js/flashmessages.js','js/wishes_helper.js' ]); ?>
 
 <h2><?=$title?></h2>

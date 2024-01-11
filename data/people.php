@@ -29,5 +29,8 @@ return( array(
         'egon' => ['fullname' => 'Egon Eklig'],
         'floppy' => ['fullname' => 'Florian Popp', 'inactive' => true],
         'guste' => ['inactive' => ['start'=> '01.02.2023', 'end' => '31.12.2025']],
+        'harald' => ['fullname' => 'Harry Ald'],
+//        'irmfried' => ['fullname' => 'Irma Friedrich'],
+//        'juste' => ['fullname' => 'Jutta Stenzel'],
     )
 );
