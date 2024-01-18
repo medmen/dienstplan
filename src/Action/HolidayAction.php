@@ -6,12 +6,12 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Views\PhpRenderer;
 use Dienstplan\Support\Config;
-use Dienstplan\Worker\Wishes;
+use Dienstplan\Worker\Holidays;
 use DateTimeImmutable;
 use DateInterval;
 use Odan\Session\SessionInterface;
 
-final class WishAction
+final class HolidayAction
 {
     private PhpRenderer $renderer;
     private $persons, $month, $dienstplan, $session, $flash;
@@ -23,18 +23,16 @@ final class WishAction
     )
     {
         // Read settings
-        $this->persons = serialize($config->get("people"));
         $this->renderer = $renderer;
         $this->month = new DateTimeImmutable('now');
         $this->session = $session;
     }
 
-
     public function __invoke(Request $request, Response $response, array $args): Response
     {
         $this->flash = $this->session->getFlash();
         $this->flash->clear(); // clear flash messages
-        $this->flash->add('info', 'Invoking Wish Action');
+        $this->flash->add('info', 'Invoking Holiday Action');
 
         // if no month was given, use actual month
         // $haeh = $args['target_month'];
@@ -62,17 +60,17 @@ final class WishAction
         }
 
         $this->renderer->addAttribute('flash', $this->flash->all());
-        $this->renderer->addAttribute('title', 'Wunsch für ' . $formatted_monthyear);
+        $this->renderer->addAttribute('title', 'Urlaub für ' . $formatted_monthyear);
         $this->renderer->addAttribute('persons', $this->persons);
         $this->renderer->addAttribute('days_in_month', $last_day_in_month->format("d"));
         $this->renderer->addAttribute('calendarmonth', $calendarmonth);
         $this->renderer->addAttribute('user', $this->session->get('user'));
 
-        $wishes = new Wishes($this->session, $this->month);
+        $holidays = new Holidays($this->session);
 
-        $this->wuensche = $wishes->get_wishes_for_month($this->month, true); // second parameter fetches people without wishes for mpnth
-        $this->renderer->addAttribute('wishes', $this->wuensche);
+        $this->urlaub = $holidays->get_holidays_for_month($this->month, true); // second parameter fetches people without wishes for month
+        $this->renderer->addAttribute('holidays', $this->urlaub);
 
-        return $this->renderer->render($response, 't_wishes.php', ['target_month' => $this->month->format('U')]);
+        return $this->renderer->render($response, 't_holidays.php', ['target_month' => $this->month->format('U')]);
     }
 }
