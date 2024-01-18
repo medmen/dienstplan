@@ -17,6 +17,7 @@ final class UserAction
     {
         $this->session = $session;
         $this->flash = $session->getFlash();
+        $this->flash->clear(); // clear flash messages
     }
 
     public function __invoke(

@@ -223,16 +223,18 @@ class Dutyroster
                 continue;
             }
 
-            if (!array_key_exists($candidate->getId(), $this->wishes)) {
+            $candidateId = $candidate->getId();
+
+            if (!array_key_exists($candidateId, $this->wishes)) {
                 continue;
             }
 
-            if (!array_key_exists($day, $this->wishes[$candidate])) {
+            if (!array_key_exists($day, $this->wishes[$candidateId])) {
                 continue;
             }
 
-            if ($this->wishes[$candidate][$day] == 'D') {
-                    $candidates_arr[] = $candidate;
+            if ($this->wishes[$candidateId][$day] == 'D') {
+                    $candidates_arr[] = $candidateId;
             }
         }
         return $candidates_arr;

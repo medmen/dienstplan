@@ -28,6 +28,8 @@ return function (App $app) {
     $app->get('/doku', \Dienstplan\Action\DokuAction::class)->setName('documentation');
     $app->get('/wuensche', \Dienstplan\Action\WishAction::class)->setName('wishes');
     $app->post('/wuenschespeichern', \Dienstplan\Action\WishSubmitAction::class)->setName('savewishes');
+    $app->get('/urlaub', \Dienstplan\Action\HolidayAction::class)->setName('holidays');
+    $app->post('/urlaubspeichern', \Dienstplan\Action\HolidaySubmitAction::class)->setName('saveholidays');
     $app->get('/[{target_month}]', \Dienstplan\Action\HomeAction::class)->setName('home');
 
 /**

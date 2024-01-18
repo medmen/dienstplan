@@ -33,15 +33,19 @@ final class HomeAction
     public function __invoke(Request $request, Response $response): Response
     {
         $this->flash = $this->session->getFlash();
+        $this->flash->clear(); // clear flash messages
         $this->flash->add('info', 'Invoking Home Action');
 
         // if no month was given, use actual month
         $month_given = $request->getQueryParams()['target_month'];
+
         // isDateWithinLast10Years is defined in /Support/functions.php
-        if ((is_null($month_given) === false) and isDateWithinLast10Years($month_given)) {
-            $this->month = \DateTimeImmutable::createFromFormat('m/Y', $month_given);
-        } else {
-            $this->flash->add('error', 'selected month is older or younger than 10 years, using actual month instead');
+        if (!is_null($month_given)) {
+            if (isDateWithinLast10Years($month_given)) {
+                $this->month = \DateTimeImmutable::createFromFormat('m/Y', $month_given);
+            } else {
+                $this->flash->add('error', 'selected month is older or younger than 10 years, using actual month instead');
+            }
         }
 
         $formatted_monthyear = \IntlDateFormatter::formatObject($this->month, "MMMM y");
