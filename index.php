@@ -1,11 +1,17 @@
 <?php
-require 'dienstplan.php';
+
+require 'dutyroster.php';
 $dienstplan = new dienstplan();
-$dienstplan->generate();
+
+if(!$dienstplan->load() or $_GET['regenerate']=='regenerate') {
+    $dienstplan->generate();
+}
+
 $debug = $dienstplan->getdebug();
-session_start();
+
 if(isset($_SESSION['username'])) {
-    $dienstplan->add_message('speichere dienstplan für '.$dienstplan->readable_month);
+    $dienstplan->add_message('speichere dutyroster für '.$dienstplan->readable_month);
+    $dienstplan->save();
 } else {
     session_destroy();
 }
@@ -20,7 +26,7 @@ if(isset($_SESSION['username'])) {
 <div class="container">
     <?php include 'navigation.php';?>
     <h1>Der Dienstplan für <?php echo $dienstplan->readable_month; ?></h1>
-
+    <h2><form><button type="submit" formaction="./?generate=generate">NEU GENERIEREN</button></form></h2>
     <?php if($debug): ?>
         <section class="row">
             <aside><?php echo implode("<br>\n", $debug); ?></aside>
@@ -33,7 +39,7 @@ if(isset($_SESSION['username'])) {
 
     <section class="row">
     <article id="main" class="seven columns">
-        <?php   echo $dienstplan->display('dienstplan'); ?>
+        <?php   echo $dienstplan->display('dutyroster'); ?>
     </article>
     <div class="three columns offset-by-one">
         <aside>

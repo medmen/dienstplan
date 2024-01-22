@@ -1,3 +1,5 @@
+[![Tests](https://github.com/medmen/dienstplan/actions/workflows/Tests.yml/badge.svg)](https://github.com/medmen/dienstplan/actions/workflows/Tests.yml)
+
 # dienstplan
 a Duty roster respecting wishes and obeying rules
 

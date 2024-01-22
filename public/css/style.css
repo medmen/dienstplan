@@ -1,0 +1,114 @@
+:root {
+    --bg-img: url("../images/hintergrund.jpg");
+    --bg-color: rgba(123,123,123,0.5);
+    --red: #b00;
+    --blue: #00b;
+    --darkgrey: #888888;
+    --fullwidth: 100%;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    min-height: 100%;
+}
+
+body {
+    /* background-image: url("../images/hintergrund.jpg"); */
+    background-image: var(--bg-img);
+    /** gradient HAS To be in line before image to show up!! **/
+    background-image: linear-gradient(to right, rgba(200,200,200,0.8), rgba(123,123,123,0.9)),
+    var(--bg-img);
+
+    /* Background image is centered vertically and horizontally at all times */
+    background-position: center center;
+
+    /* Background image doesn't tile */
+    background-repeat: no-repeat;
+
+    /* Background image is fixed in the viewport so that it doesn't move when
+       the content's height is greater than the image's height */
+    background-attachment: fixed;
+
+    /* This is what makes the background image rescale based
+       on the container's size */
+    background-size: cover;
+
+    /* Set a background color that will be displayed
+       while the background image is loading */
+    background-color: rgba(0,0,0,0.5);
+}
+
+
+#topnavigation {
+    padding: 1%;
+    margin: 1%;
+    border-bottom: 1px solid silver;
+    border-right: 1px solid silver;
+    border-radius: 10px;
+}
+
+#topnavigation li {
+    list-style: none;
+    text-align: center;
+    border: 1px solid black;
+}
+
+.container {
+    /** background-image: linear-gradient(to bottom right, rgba(123,123,123,0.5), rgba(0,0,0,0.2));*/
+}
+
+/** CSS-Grid **/
+.gridcontainer {
+    width: 100%;
+    min-width: 100%;
+    display: grid;
+    grid-template-columns: 32% 32% 32%;
+    grid-gap: 2%;
+    /* background-color: rgba(123,123,123,0.5); */
+    background-color: var(--bg-color);
+}
+
+.box {
+    background-color: var(--bg-color);
+    border-radius: 5px;
+    padding: 20px;
+    font-size: 105%;
+}
+
+/* format day numbers in schedule to 2 digits */
+
+.tbl_dienstplan {
+    counter-reset: count 0;
+    border-collapse: separate;
+    border-spacing: 1em;
+    background-color: var(--darkgrey);
+    opacity: 0.9;
+}
+
+.tbl_dienstplan .day {
+    counter-increment: count 1;
+    content: counter(count, decimal-leading-zero);
+}
+
+.tbl_dienstplan td {
+    padding-left: 0.4em;
+    padding-right: 0.4em;
+}
+
+
+.tbl_dienstplan {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.tbl_dienstplan tbody {
+    display: flex;
+    flex-direction: row;
+}
+.tbl_dienstplan tr {
+    display: flex;
+    flex-direction: column;
+}
