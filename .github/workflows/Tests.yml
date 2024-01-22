@@ -30,18 +30,21 @@ jobs:
         with:
           php_version: "8.1"
           php_extensions: calendar mbstring intl xdebug
-          args: --no-progress --prefer-dist --optimize-autoloader
+          args: --no-progress --no-interaction --prefer-dist --optimize-autoloader        
 
-      - name: PhpUnit Tests
-        uses: php-actions/phpunit@v3
-        with:
-          php_version: 8.1
-          php_extensions: calendar mbstring intl xdebug
-          bootstrap: vendor/autoload.php
-          configuration: tests/phpunit.xml
-          args: --coverage-text
-        env:
-          XDEBUG_MODE: coverage
+      - name: Execute tests (Unit and Feature tests) via PestPHP
+        run: vendor/bin/pest --coverage-clover clover.xml
+
+#      - name: PhpUnit Tests
+#        uses: php-actions/phpunit@v3
+#      with:
+#          php_version: 8.1
+#          php_extensions: calendar mbstring intl xdebug
+#          bootstrap: vendor/autoload.php
+#          configuration: tests/phpunit.xml
+#          args: --coverage-text
+#        env:
+#          XDEBUG_MODE: coverage
             
       - uses: actions/upload-artifact@v3
         with:
