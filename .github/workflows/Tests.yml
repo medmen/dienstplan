@@ -46,7 +46,7 @@ jobs:
 #        env:
 #          XDEBUG_MODE: coverage
             
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: debug-output
           path: output.log
