@@ -19,9 +19,9 @@ class HolidaySubmitAction
     {
         $data = (array)$request->getParsedBody();
         $target_month = \DateTimeImmutable::createFromFormat('U', $data['target_month']); // Date gets passed as Unix time!
-        // Clear all flash messages
         $this->flash = $this->session->getFlash();
-        $this->flash->clear();
+        // Clear all flash messages
+        // $this->flash->clear();
         $this->flash->add('info', 'Invoking Holiday Submit Action');
 
         $holidays = new Holidays($this->session);

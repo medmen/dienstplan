@@ -25,6 +25,9 @@ final class DokuAction
         $this->flash = $this->session->getFlash();
         $this->flash->add('info', 'Invoking Doku Action');
         $this->renderer->addAttribute('user', $this->session->get('user'));
+        $this->renderer->addAttribute('flash', $this->flash->all());
+
+        $this->flash->clear(); // clear flash messages
 
         return $this->renderer->render($response, 't_doku.php', ['year' => '2023', 'title' => 'Dokumentation']);
     }

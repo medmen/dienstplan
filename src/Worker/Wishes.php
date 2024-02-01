@@ -99,13 +99,15 @@ class Wishes{
      * @return bool
      * @throws \ErrorException
      */
-    function save(array $wuensche_arr) :bool {
+    function save(\DateTimeImmutable $target_month, array $wuensche_arr) :bool {
         $wuensche = array();
+        $this->set_target_month($target_month);
         // remove submit button value
         unset($wuensche_arr['submit_wishes'], $wuensche_arr['target_month']);
         // remove empty values recursively
         $wuensche_arr = $this->array_remove_empty_recursive($wuensche_arr);
 
+        // @TODO: make allowed Duty Types a config variable
         $allowed_dutytypes = array('D', 'F');
 
         foreach($wuensche_arr as $personname => $wishes_arr) {

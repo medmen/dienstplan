@@ -33,7 +33,6 @@ final class HomeAction
     public function __invoke(Request $request, Response $response): Response
     {
         $this->flash = $this->session->getFlash();
-        $this->flash->clear(); // clear flash messages
         $this->flash->add('info', 'Invoking Home Action');
 
         // if no month was given, use actual month
@@ -59,6 +58,8 @@ final class HomeAction
 
         $this->dienstplan = $dutyroster->create_or_show_for_month($this->month);
         $this->renderer->addAttribute('dienstplan', $this->dienstplan);
+
+        $this->flash->clear(); // clear flash messages
 
         return $this->renderer->render($response, 'home.php', ['name' => 'World']);
     }

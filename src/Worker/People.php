@@ -10,6 +10,7 @@ use Odan\Session\SessionInterface;
 class People {
     private string $path_to_configfiles;
     private SessionInterface $session;
+    private FlashInterface $flash;
     function __construct(SessionInterface $session) {
 
         $this->path_to_configfiles = __DIR__ . '/../../data/people.php';

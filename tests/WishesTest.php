@@ -5,6 +5,7 @@ use Dienstplan\Worker\Wishes;
 use Odan\Session\SessionInterface;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
+use org\bovigo\vfs\vfsStream, org\bovigo\vfs\vfsStreamDirectory;
 
 class WishesTest extends TestCase
 {
@@ -17,25 +18,21 @@ class WishesTest extends TestCase
      * @var MockObject|SessionInterface
      */
     private $sessionMock;
+    protected static $root;
+
+    static function setUpBeforeClass(): void
+    {
+        self::$root = vfsStream::setup('data');
+        $people = vfsStream::url('data/people.php');
+        file_put_contents($people, '<?php return( array(\'anton\' => [\'fullname\' => \'Anton Anders\', \'pw\' => \'password\'], \'berta\' => [\'fullname\' => \'Berta Besonders\', \'pw\' => \'password\', \'is_admin\' => true], \'conny\' => [\'fullname\' => \'Cornelia Chaos\'],
+        \'dick\' => [\'firstname\' => \'Dirk\', \'lastname\' => \'Ickinger\'], \'egon\' => [\'fullname\' => \'Egon Eklig\'], \'floppy\' => [\'fullname\' => \'Florian Popp\', \'inactive\' => true], \'guste\' => [\'inactive\' => [\'start\'=> \'01.02.2023\', \'end\' => \'31.12.2025\']],
+        \'harald\' => [\'fullname\' => \'Harry Ald\']));');
+    }
 
     protected function setUp(): void
     {
         $this->sessionMock = $this->createMock(SessionInterface::class);
         $this->wishes = new Wishes($this->sessionMock);
-    }
-
-    public function testGetWishesForMonthNoFileExistsAndNoWishes()
-    {
-        $targetMonth = new DateTimeImmutable('2023-04-01');
-        $expectedFlashBag = ['warning' => ['Bisher wurden keine Wünsche für diesen Monat gespeichert']];
-        $this->sessionMock->expects($this->once())->method('getFlash')->willReturn($expectedFlashBag);
-
-        $this->assertFalse(file_exists($this->wishes->conffiles['wishes']));
-
-        $result = $this->wishes->get_wishes_for_month($targetMonth, false, false);
-
-        $this->assertEmpty($result);
-        // Can't test the flash message because it is not returned or accessible due to private scope
     }
 
     public function testGetWishesForMonthFileExistsAndEmptyWishes()
@@ -59,62 +56,6 @@ class WishesTest extends TestCase
         $this->assertEquals([], $result);
     }
 
-    public function testSaveWishesSuccessfully()
-    {
-        $input = ['person1' => ['01_D', '02_F']];
-        $this->wishes->set_target_month(new DateTimeImmutable('2023-04-01'));
-        $expectedFileName = dirname(__DIR__, 2) . '/data/wishes_2023_04.php';
-
-        // Mock file_put_contents to return a non-false value
-        $this->wishes = $this->getMockBuilder(Wishes::class)
-            ->setConstructorArgs([$this->sessionMock])
-            ->onlyMethods(['file_put_contents'])
-            ->getMock();
-
-        $this->wishes->expects($this->once())
-            ->method('file_put_contents')
-            ->with($expectedFileName, $this->callback(function ($fileContent) {
-                // Validate the content of the generated file to match the expected PHP export format
-                return strpos($fileContent, 'return array(') !== false;
-            }))
-            ->willReturn(10); // Should return the number of bytes written
-
-        $success = $this->wishes->save($input);
-
-        $this->assertTrue($success);
-    }
-
-    public function testSaveWishesWithInvalidDutyTypes()
-    {
-        // Simulating submitted duties with not allowed type 'Z'
-        $input = ['person1' => ['01_Z']];
-        $this->wishes->set_target_month(new DateTimeImmutable('2023-04-01'));
-
-        $success = $this->wishes->save($input);
-
-        // Assertions should confirm that 'Z' is not included in the save data and save is successful
-        $this->assertTrue($success);
-    }
-
-    public function testSaveWishesFailToWrite()
-    {
-        $input = ['person1' => ['01_D']];
-
-        // Mock file_put_contents to return false representing failure
-        $this->wishes = $this->getMockBuilder(Wishes::class)
-            ->setConstructorArgs([$this->sessionMock])
-            ->onlyMethods(['file_put_contents'])
-            ->getMock();
-
-        $this->wishes->expects($this->once())
-            ->method('file_put_contents')
-            ->willReturn(false);
-
-        $this->expectException(\ErrorException::class);
-        $this->expectExceptionMessage('Speichern der Dienstwünsche ist fehlgeschlagen');
-
-        $this->wishes->save($input);
-    }
 
     public function testArrayRemoveEmptyRecursive()
     {

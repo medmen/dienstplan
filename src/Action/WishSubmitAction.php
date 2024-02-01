@@ -22,12 +22,12 @@ class WishSubmitAction
 
         // Clear all flash messages
         $this->flash = $this->session->getFlash();
-        $this->flash->clear();
+        // $this->flash->clear();
 
         $wishes = new Wishes($this->session, $target_month);
 
         try {
-            $wishes->save($data);
+            $wishes->save($target_month, $data);
             $this->flash->add('success', 'Erfolgreich gespeichert');
         } catch(\Exception $e) {
             $this->flash->add('error', 'Fehler beim Speichern: '.$e->getMessage());

@@ -31,7 +31,6 @@ final class HolidayAction
     public function __invoke(Request $request, Response $response, array $args): Response
     {
         $this->flash = $this->session->getFlash();
-        $this->flash->clear(); // clear flash messages
         $this->flash->add('info', 'Invoking Holiday Action');
 
         // if no month was given, use actual month
@@ -70,7 +69,7 @@ final class HolidayAction
 
         $this->urlaub = $holidays->get_holidays_for_month($this->month, true); // second parameter fetches people without wishes for month
         $this->renderer->addAttribute('holidays', $this->urlaub);
-
+        $this->flash->clear(); // clear flash messages
         return $this->renderer->render($response, 't_holidays.php', ['target_month' => $this->month->format('U')]);
     }
 }

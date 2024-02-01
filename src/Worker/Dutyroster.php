@@ -4,6 +4,7 @@ namespace Dienstplan\Worker;
 
 use Dienstplan\Worker\Wishes;
 use Dienstplan\Worker\People;
+use Dienstplan\Worker\Limits;
 use Odan\Session\SessionInterface;
 use Odan\Session\FlashInterface;
 
@@ -47,16 +48,8 @@ class Dutyroster
 
     protected function get_limits(): array
     {
-        /**
-        $limits = new Limits();
-        $this->limits = $limits->load();
-         */
-        return( [
-                'total' => 5,
-                'we' => 2,
-                'fr' => 1,
-                'max_iterations' => 500
-        ]);
+        $limits = new Limits($this->session);
+        return ($limits->load());
     }
 
     protected function set_formatted_month_data(\DateTimeImmutable $target_month): void

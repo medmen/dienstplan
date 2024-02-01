@@ -23,7 +23,7 @@ final class WishAction
     )
     {
         // Read settings
-        $this->persons = serialize($config->get("people"));
+        // $this->persons = serialize($config->get("people"));
         $this->renderer = $renderer;
         $this->month = new DateTimeImmutable('now');
         $this->session = $session;
@@ -33,7 +33,6 @@ final class WishAction
     public function __invoke(Request $request, Response $response, array $args): Response
     {
         $this->flash = $this->session->getFlash();
-        $this->flash->clear(); // clear flash messages
         $this->flash->add('info', 'Invoking Wish Action');
 
         // if no month was given, use actual month
@@ -72,7 +71,7 @@ final class WishAction
 
         $this->wuensche = $wishes->get_wishes_for_month($this->month, true); // second parameter fetches people without wishes for mpnth
         $this->renderer->addAttribute('wishes', $this->wuensche);
-
+        $this->flash->clear(); // clear flash messages, all necessary messages should have been sent by now
         return $this->renderer->render($response, 't_wishes.php', ['target_month' => $this->month->format('U')]);
     }
 }
