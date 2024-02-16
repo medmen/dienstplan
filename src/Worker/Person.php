@@ -71,7 +71,7 @@ class Person {
         }
     }
 
-    function getInactive():bool {
+    function getInactive():bool|array {
         if (isset($this->inactive)) {
             return $this->inactive;
         }
@@ -80,7 +80,7 @@ class Person {
 
     function validateDate($date, $format = 'd.m.Y')
     {
-        $d = \DateTime::createFromFormat($format, $date);
+        $d = \DateTimeImmutable::createFromFormat($format, $date);
 // The Y ( 4 digits year ) returns TRUE for any integer with any number of digits so changing the comparison from == to === fixes the issue.
         return $d && $d->format($format) === $date;
     }
@@ -100,7 +100,7 @@ class Person {
     }
 
     function createFromNamedArray($person_data, $id=null) :Person|null {
-            if (isset($id)) {$this->setId($id);} else {$this->generateId();}
+            if (isset($id)) {$this->setId($id);} else {$this->generateId($person_data);}
             // ease transition from old cod
             if (isset($person_data['fullname'])) {
                 $firstlastname = explode(' ', trim($person_data['fullname']));
@@ -115,6 +115,18 @@ class Person {
             return $this;
     }
 
+    private function generateId($person_data) :string {
+        if (isset($person_data['fullname'])) {
+            $firstlastname = explode(' ', trim($person_data['fullname']));
+            $person_data['firstname'] = trim($firstlastname[0]);
+            $person_data['lastname'] = trim(end($firstlastname));
+        }
+
+        $prefix = $person_data['lastname'].substr($person_data['firstname'], 0,1); // lastname + first letter of firstname
+
+        return (uniqid($prefix));
+    }
+
     function isInactive(\DateTimeImmutable $date = new \DateTimeImmutable()) {
 
         $inactive_val = $this->getInactive();
@@ -123,9 +135,9 @@ class Person {
         }
 
         if(is_array($inactive_val)) {
-            $startdate = \DateTime::createFromFormat('d.m.Y', $inactive_val['start']);
-            $enddate = \DateTime::createFromFormat('d.m.Y', $inactive_val['end']);
-            if($startdate instanceof \DateTime and $enddate instanceof \DateTime) {
+            $startdate = \DateTimeImmutable::createFromFormat('d.m.Y', $inactive_val['start']);
+            $enddate = \DateTimeImmutable::createFromFormat('d.m.Y', $inactive_val['end']);
+            if($startdate instanceof \DateTimeImmutable and $enddate instanceof \DateTimeImmutable) {
                 return $this->is_date_in_range($date, $startdate, $enddate);
             }
         }
@@ -136,7 +148,7 @@ class Person {
         return (array)$this;
     }
 
-    function is_date_in_range(\DateTime $date, \DateTime $start, \DateTime $end) {
+    function is_date_in_range(\DateTimeImmutable $date, \DateTimeImmutable $start, \DateTimeImmutable $end) {
         return $date > $start && $date < $end;
     }
 

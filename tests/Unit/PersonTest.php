@@ -1,12 +1,16 @@
 <?php
 
 declare(strict_types=1);
+
+use \Dienstplan\Worker\Person;
+
 beforeEach(function () {
-    $this->person = new \Dienstplan\Worker\Person();
+    $this->person = new Person();
 });
 afterEach(function () {
     $this->person = null;
 });
+
 test('set and get id', function () {
     $this->person->setId("1");
     expect($this->person->getId())->toEqual("1");
@@ -54,6 +58,7 @@ test('is boolish', function () {
     expect($this->person->isBoolish("invalid"))->toBeNull();
     expect($this->person->isBoolish(null))->toBeNull();
 });
+
 test('create from named array', function () {
     $person_data = array(
         "id"        => "1",
@@ -62,29 +67,34 @@ test('create from named array', function () {
         "is_admin"  => true,
         "inactive"  => array("start" => "01.01.2022", "end" => "10.01.2022")
     );
-    $this->person->createFromNamedArray($person_data);
-    expect($this->person->getId())->toEqual("1");
-    expect($this->person->getFirstname())->toEqual("John");
-    expect($this->person->getLastname())->toEqual("Doe");
-    expect($this->person->getFullname())->toEqual("John Doe");
-    expect($this->person->getAdminflag())->toEqual(true);
-    expect($this->person->getInactive())->toEqual($person_data["inactive"]);
+    $result = $this->person->createFromNamedArray($person_data, $person_data['id']);
+
+    expect($result)
+        ->toBeInstanceOf(Person::class)
+        ->getId()->toEqual("1")
+        ->getFirstname()->toEqual("John")
+        ->getLastname()->toEqual("Doe")
+        ->getFullname()->toEqual("John Doe")
+        ->getAdminflag()->toEqual(true)
+        ->getInactive()->toEqual($person_data["inactive"]);
 });
+
 test('is inactive', function () {
     $inactive = array("start" => "01.01.2022", "end" => "10.01.2022");
     $this->person->setInactive($inactive);
-    expect($this->person->isInactive(new \DateTime("05.01.2022")))->toBeTrue();
+    expect($this->person->isInactive(new \DateTimeImmutable("05.01.2022")))->toBeTrue();
 
     $this->person->setInactive(true);
     expect($this->person->isInactive())->toBeTrue();
 });
-test('is date in range', function () {
-    $start = new \DateTime("01.01.2022");
-    $end   = new \DateTime("10.01.2022");
 
-    $date1 = new \DateTime("05.01.2022");
+test('is date in range', function () {
+    $start = new \DateTimeImmutable("01.01.2022");
+    $end   = new \DateTimeImmutable("10.01.2022");
+
+    $date1 = new \DateTimeImmutable("05.01.2022");
     expect($this->person->is_date_in_range($date1, $start, $end))->toBeTrue();
 
-    $date2 = new \DateTime("15.01.2022");
+    $date2 = new \DateTimeImmutable("15.01.2022");
     expect($this->person->is_date_in_range($date2, $start, $end))->toBeFalse();
 });

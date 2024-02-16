@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-use \DienstplanTest\DutyrosterMock;
+use \DienstplanTest\Feature\DutyrosterMock;
+use Dienstplan\Worker\Dutyroster;
+use Dienstplan\Worker\Wishes;
 use Odan\Session\MemorySession;
 
 beforeEach(closure: function () {
@@ -11,7 +13,8 @@ beforeEach(closure: function () {
     $this->session = new MemorySession();
     $this->config = [
         'people' => [
-            'anton'  => ['fullname' => 'Anton Anders', 'pw' => '$2y$10$cv0fitJNDmQdzydZBGcW7eBYqmwqcpSQWMOqt/FiFrTthVqHZqHD6'], // pw chaf666
+            //pw is create using password_hash("my super secret password", PASSWORD_DEFAULT);
+            'anton'  => ['fullname' => 'Anton Anders', 'pw' => '$2y$10$cv0fitJNDmQdzydZBGcW7eBYqmwqcpSQWMOqt/FiFrTthVqHZqHD6'],
             'berta'  => ['fullname' => 'Berta Besonders', 'pw' => '$2y$10$cv0fitJNDmQdzydZBGcW7eBYqmwqcpSQWMOqt/FiFrTthVqHZqHD6', 'is_admin' => true],
             'conny'  => [],
             'dick'   => [],
@@ -52,20 +55,28 @@ beforeEach(closure: function () {
         ]
     ];
 
-    $this->dutyroster_mock = new DutyrosterMock($this->session, $this->target_month);
-    $this->dutyroster_mock->set_config_data($this->config);
+    $this->dutyroster_mock = new Dutyroster($this->session);
+    // $this->dutyroster_mock->set_config_data($this->config);
+    // $this->dutyroster_mock->set_formatted_month_data($this->target_month);
 
 });
 afterEach(function () {
 });
 
 test('get wishes', function() {
-    expect($this->dutyroster_mock->get_wishes_for_month($session, $target_month))->toBeArray();
+    $wishes = new Wishes($this->session);
+    $get_wishes_for_month = new ReflectionMethod($wishes, 'get_wishes_for_month');
+    $get_wishes_for_month->setAccessible(true); // make protected function accesssible from Test env
+    $result = $get_wishes_for_month->invokeArgs($wishes, [$this->session, $this->target_month]);
+    expect($result)->toBeArray();
+    // expect($this->dutyroster_mock->get_wishes_for_month($this->session, $this->target_month))->toBeArray();
 }) ;
 
 test('has noduty wish', function () {
     expect($this->dutyroster_mock->has_noduty_wish('anton', 4))->toBeTrue();
-})->depends('get wishes');
+});
+
+//    ->depends('get wishes');
 
 test('candidates have duty wish', function () {
     expect($this->dutyroster_mock->candidates_have_duty_wish(1))->toContain('anton');

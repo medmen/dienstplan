@@ -59,7 +59,7 @@ class Dutyroster
         ]);
     }
 
-    protected function set_formatted_month_data(\DateTimeImmutable $target_month): void
+    private function set_formatted_month_data(\DateTimeImmutable $target_month): void
     {
         // merge all config file for month in on big arrray
         $this->month_string = $target_month->format('Y_m');

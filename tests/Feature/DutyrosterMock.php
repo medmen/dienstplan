@@ -13,7 +13,6 @@ class DutyrosterMock extends Dutyroster
     public function set_config_data(array $data): void
     {
         $this->config = $data;
-        $this->wishes = $this->get_wishes_for_month();
         $this->wishes = $data['wishes'];
     }
 
