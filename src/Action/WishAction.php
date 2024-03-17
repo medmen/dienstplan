@@ -2,6 +2,7 @@
 
 namespace Dienstplan\Action;
 
+use Dienstplan\Worker\People;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Views\PhpRenderer;
@@ -50,28 +51,23 @@ final class WishAction
         }
 
         $formatted_monthyear = \IntlDateFormatter::formatObject($this->month, "MMMM y");
-        $first_day_in_month = $this->month->modify("first day of this month")->setTime(0,0,0); // make sure to zero time of this day to avoid rounding issues in period used later
+
+        $calendarmonth = generateWeekdaysForMonth($this->month);
         $last_day_in_month = $this->month->modify("last day of this month")->setTime(0,0,1); // make sure end date is a bit later than start to avoid rounding issues in period
-        $interval = DateInterval::createFromDateString('1 day');
-        $daterange = new \DatePeriod($first_day_in_month, $interval ,$last_day_in_month);
 
-        $calendarmonth = array();
-        foreach($daterange as $day) {
-            $calendarmonth[$day->format('d')] = $day->format('N'); // 'N' = 1 Monday, 7 Sunday
-            //@TODO implement holidays!
-        }
 
+        $people = new People($this->session);
+        $wishes = new Wishes($this->session, $people);
+
+        $this->wuensche = $wishes->get_wishes_for_month($this->month, true); // second parameter fetches people without wishes for mpnth
+
+        $this->renderer->addAttribute('wishes', $this->wuensche);
         $this->renderer->addAttribute('flash', $this->flash->all());
         $this->renderer->addAttribute('title', 'Wunsch für ' . $formatted_monthyear);
         $this->renderer->addAttribute('persons', $this->persons);
-        $this->renderer->addAttribute('days_in_month', $last_day_in_month->format("d"));
         $this->renderer->addAttribute('calendarmonth', $calendarmonth);
+        $this->renderer->addAttribute('days_in_month', $last_day_in_month->format("d"));
         $this->renderer->addAttribute('user', $this->session->get('user'));
-
-        $wishes = new Wishes($this->session, $this->month);
-
-        $this->wuensche = $wishes->get_wishes_for_month($this->month, true); // second parameter fetches people without wishes for mpnth
-        $this->renderer->addAttribute('wishes', $this->wuensche);
 
         return $this->renderer->render($response, 't_wishes.php', ['target_month' => $this->month->format('U')]);
     }

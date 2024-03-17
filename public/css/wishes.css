@@ -29,15 +29,6 @@ th:hover::after {
     border: 1px dotted darkgrey;
 }
 
-.tbl_wishes .fr {
-    color: #333333;
-}
-
-.tbl_wishes .we {
-    color: #555555;
-    text-decoration-line: underline;
-}
-
 .tbl_wishes .crowded {
     background-color: darkorange;
 }

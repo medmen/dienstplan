@@ -1,0 +1,37 @@
+/* format day numbers in schedule to 2 digits */
+
+.tbl_dienstplan {
+    counter-reset: count 0;
+    border-collapse: separate;
+    border-spacing: 0.2em;
+    background-color: var(--darkgrey);
+    opacity: 0.9;
+}
+
+.tbl_dienstplan .day {
+    counter-increment: count 1;
+    content: counter(count, decimal-leading-zero);
+}
+
+.tbl_dienstplan td, .tbl_dienstplan th {
+    padding-left: 0.4em;
+    padding-right: 0.4em;
+}
+
+@media (max-width: 800px) {
+    .tbl_dienstplan {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .tbl_dienstplan tbody, .tbl_dienstplan thead, .tbl_dienstplan tfoot {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .tbl_dienstplan tr {
+        display: flex;
+        flex-direction: column;
+    }
+}

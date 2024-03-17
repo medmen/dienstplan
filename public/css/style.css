@@ -78,37 +78,17 @@ body {
     font-size: 105%;
 }
 
-/* format day numbers in schedule to 2 digits */
-
-.tbl_dienstplan {
-    counter-reset: count 0;
-    border-collapse: separate;
-    border-spacing: 1em;
-    background-color: var(--darkgrey);
-    opacity: 0.9;
+th.fr {
+    color: #555555;
 }
 
-.tbl_dienstplan .day {
-    counter-increment: count 1;
-    content: counter(count, decimal-leading-zero);
+th.we {
+    text-decoration-line: underline;
+    font-weight: bolder;
 }
 
-.tbl_dienstplan td {
-    padding-left: 0.4em;
-    padding-right: 0.4em;
+th, td {
+    padding: 0.5em;
+    text-align: center;
 }
 
-
-.tbl_dienstplan {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.tbl_dienstplan tbody {
-    display: flex;
-    flex-direction: row;
-}
-.tbl_dienstplan tr {
-    display: flex;
-    flex-direction: column;
-}

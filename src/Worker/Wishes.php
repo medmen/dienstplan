@@ -23,10 +23,11 @@ class Wishes{
     private array $people_available;
     private string $path_to_configfiles;
     private SessionInterface $session;
-    function __construct(SessionInterface $session)
+    function __construct(SessionInterface $session, People $people)
     {
         $this->session = $session;
         $this->flash = $this->session->getFlash();
+        $this->people = $people;
         // merge all config file for month in on big arrray
         $this->config = []; // start with pristine array
         $this->path_to_configfiles = __DIR__.'/../../data/';
@@ -40,24 +41,18 @@ class Wishes{
         $this->year_int = $target_month->format('Y');
     }
 
-    private function get_people_for_month(): array
-    {
-        $people = new People($this->session);
-        return($people->load($this->target_month));
-    }
 
     /**
      * @param $target_month \DateTimeImmutable
      *
      * @return array
-     * @TODO finalize, then reduce load_wishes to wrapper.
      */
     public function get_wishes_for_month(\DateTimeImmutable $target_month, $add_empty_people = false, $allow_unknown_people = false): array
     {
         $this->set_target_month($target_month);
 
         $wishes = array();
-        $people = $this->get_people_for_month();
+        $people = $this->people->load_for_month($target_month);
 
         $wishes_file = $this->path_to_configfiles.'wishes_'.$this->month_string.'.php';
         $this->conffiles['wishes'] = $wishes_file;

@@ -43,7 +43,7 @@ class Holidays{
     private function get_people_for_month(): array
     {
         $people = new People($this->session);
-        return($people->load($this->target_month));
+        return($people->load_for_month($this->target_month));
     }
 
     /**

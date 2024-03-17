@@ -7,6 +7,8 @@ use Odan\Session\SessionManagerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Routing\RouteContext;
+use Dienstplan\Support\Config;
+
 
 final class LoginSubmitAction
 {
@@ -16,14 +18,16 @@ final class LoginSubmitAction
     public function __construct(
         SessionInterface $session,
         SessionManagerInterface $sessionManager,
+        Config $config
     ) {
         $this->session = $session;
         $this->sessionManager = $sessionManager;
+        $this->config = $config;
     }
 
     public function __invoke(
         ServerRequestInterface $request,
-        ResponseInterface $response
+        ResponseInterface $response,
     ): ResponseInterface {
         $data = (array)$request->getParsedBody();
         $username = (string)($data['username'] ?? '');
@@ -33,9 +37,20 @@ final class LoginSubmitAction
         // Check user credentials.
         // You may use an application/domain service and the database here.
         $user = null;
-        if($username === 'admin' && $password === 'secret') {
+        if ($username === 'admin' && $password === 'secret') {
             $user = 'admin';
         }
+
+        $path_to_people = $this->config->get('people');
+        $people = require_once($path_to_people);
+
+        if (in_array($username, $people)) {
+           if(password_hash($password) === $people[$username]['pw']) {
+               $user = $username;
+               $is_admin = $people[$username]['is_admin'] ?? false;
+           }
+        }
+
 
         // Clear all flash messages
         $flash = $this->session->getFlash();
@@ -52,6 +67,9 @@ final class LoginSubmitAction
             $this->sessionManager->regenerateId();
 
             $this->session->set('user', $user);
+            if(isset($is_admin) and $is_admin === true) {
+                $this->session->set('is_admin', true);
+            }
             $flash->add('success', 'Login successfully');
 
             // Redirect to protected page

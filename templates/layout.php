@@ -2,6 +2,7 @@
 <html lang = "de">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= html($title ?? 'Slim Tutorial') ?></title>
     <base href="<?= $basePath ?>/"/>
     <?= $this->fetch('css.php', ['assets' => $css ?? []]) ?>
