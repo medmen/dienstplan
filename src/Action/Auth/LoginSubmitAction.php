@@ -9,7 +9,6 @@ use Psr\Http\Message\ServerRequestInterface;
 use Slim\Routing\RouteContext;
 use Dienstplan\Support\Config;
 
-
 final class LoginSubmitAction
 {
     private SessionInterface $session;
@@ -44,11 +43,11 @@ final class LoginSubmitAction
         $path_to_people = $this->config->get('people');
         $people = require_once($path_to_people);
 
-        if (in_array($username, $people)) {
-           if(password_hash($password) === $people[$username]['pw']) {
-               $user = $username;
-               $is_admin = $people[$username]['is_admin'] ?? false;
-           }
+        if (in_array($username, array_keys($people))) {
+            if (password_verify($password, $people[$username]['pw'])) {
+                $user = $username;
+                $is_admin = $people[$username]['is_admin'] ?? false;
+            }
         }
 
 
@@ -67,7 +66,7 @@ final class LoginSubmitAction
             $this->sessionManager->regenerateId();
 
             $this->session->set('user', $user);
-            if(isset($is_admin) and $is_admin === true) {
+            if (isset($is_admin) and $is_admin === true) {
                 $this->session->set('is_admin', true);
             }
             $flash->add('success', 'Login successfully');
