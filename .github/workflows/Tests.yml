@@ -30,10 +30,10 @@ jobs:
         with:
           php_version: "8.1"
           php_extensions: calendar mbstring intl xdebug
-          args: --no-progress --no-interaction --prefer-dist --optimize-autoloader        
+          args: -q --no-ansi --no-progress --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Execute tests (Unit and Feature tests) via PestPHP
-        run: vendor/bin/pest --coverage-clover clover.xml
+        run: vendor/bin/pest --coverage --min=90 --coverage-clover clover.xml
 
 #      - name: PhpUnit Tests
 #        uses: php-actions/phpunit@v3

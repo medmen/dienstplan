@@ -41,6 +41,10 @@ body {
     background-color: rgba(0,0,0,0.5);
 }
 
+input[type=submit] {
+    background-color: rgba(0,0,0,0.2);
+}
+
 
 #topnavigation {
     padding: 1%;

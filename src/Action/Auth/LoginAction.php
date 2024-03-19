@@ -3,6 +3,7 @@ namespace Dienstplan\Action\Auth;
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Slim\Routing\RouteContext;
 use Slim\Views\PhpRenderer;
 use Odan\Session\SessionInterface;
 
@@ -21,10 +22,14 @@ final class LoginAction
         Request $request,
         Response $response
     ): Response {
+        // Get RouteParser from request to generate the urls
+        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+
         if($this->session->get('user') !== null) {
-            $html = '<h2>bereits eingeloggt</h2> <section>Sie sind bereits eingeloggt!</section>';
-            $response->getBody()->write($html);
-            return $response;
+            $this->session->getFlash()->add('info', 'Sie sind bereits eingeloggt!');
+            // Redirect back to the login page
+            $url = $routeParser->urlFor('home');
+            return $response->withStatus(302)->withHeader('Location', $url);
         }
         return $this->renderer->render($response, 't_login.php', ['method' => 'post', 'action' => '/login', 'title'=> 'anmelden']);
     }
