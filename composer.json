@@ -5,7 +5,7 @@
     "nyholm/psr7-server": "^1.1",
     "php-di/php-di": "^7.0",
     "monolog/monolog": "^3.7",
-    "slim/php-view": "^3.2",
+    "slim/php-view": "^3.3",
     "slim/flash": "^0.4.0",
     "odan/session": "^6.1",
     "symfony/uid": "^6.4",
