@@ -21,7 +21,7 @@
     ]
   },
   "require-dev": {
-    "phpstan/phpstan": "^1.10",
+    "phpstan/phpstan": "^1.12",
     "squizlabs/php_codesniffer": "3.*",
     "pestphp/pest": "*",
     "pestphp/pest-plugin-drift": "^2.6",
