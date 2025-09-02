@@ -7,7 +7,7 @@
     "monolog/monolog": "^3.7",
     "slim/php-view": "^3.4",
     "slim/flash": "^0.4.0",
-    "odan/session": "^6.3",
+    "odan/session": "^6.4",
     "symfony/uid": "^7.3",
     "ext-calendar": "*"
   },
