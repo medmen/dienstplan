@@ -22,7 +22,7 @@
   },
   "require-dev": {
     "phpstan/phpstan": "^2.1",
-    "squizlabs/php_codesniffer": "3.*",
+    "squizlabs/php_codesniffer": "4.*",
     "pestphp/pest": "*",
     "pestphp/pest-plugin-drift": "^3.0",
     "mockery/mockery": "^1.6",
